@@ -62,7 +62,7 @@ export default function KycScreen() {
           <View
             style={[
               styles.dot,
-              { backgroundColor: isVerified ? '#3fa66a' : showVerifyCta ? '#c4996c' : '#9aa0a6' },
+              { backgroundColor: isVerified ? '#84a45f' : showVerifyCta ? '#d29e61' : '#7d7d83' },
             ]}
           />
           <ThemedText>{isLoading ? 'Loading…' : label}</ThemedText>

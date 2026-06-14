@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { ACCENT } from './theme-extras';
 
 export interface SegmentedOption {
   key: string;
@@ -28,11 +28,11 @@ export function Segmented({
             key={opt.key}
             accessibilityRole="button"
             onPress={() => onChange(opt.key)}
-            style={[styles.item, active && { backgroundColor: ACCENT }]}>
+            style={[styles.item, active && { backgroundColor: theme.primary }]}>
             <Text
               style={[
                 styles.label,
-                { color: active ? '#1a1208' : theme.textSecondary },
+                { color: active ? theme.onAccent : theme.textSecondary },
               ]}>
               {opt.label}
             </Text>
@@ -46,5 +46,5 @@ export function Segmented({
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', borderRadius: 12, padding: 4, gap: 4 },
   item: { flex: 1, paddingVertical: 8, borderRadius: 9, alignItems: 'center' },
-  label: { fontSize: 14, fontWeight: '600' },
+  label: { fontFamily: Fonts.sansSemiBold, fontSize: 14 },
 });

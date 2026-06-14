@@ -8,8 +8,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { Fonts, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { ACCENT } from './theme-extras';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
 
@@ -20,7 +20,10 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
   style?: StyleProp<ViewStyle>;
 }
 
-/** Minimal, flat button. Three variants; no gradients or shadows (by design). */
+/**
+ * Brand button. Primary is a brass pill (the web's `rounded-full` CTA);
+ * secondary is an outlined brass pill; ghost is a bordered neutral pill.
+ */
 export function Button({
   title,
   variant = 'primary',
@@ -32,13 +35,15 @@ export function Button({
   const theme = useTheme();
   const isDisabled = disabled || loading;
 
-  const bg =
+  const bg = variant === 'primary' ? theme.primary : 'transparent';
+  const fg =
     variant === 'primary'
-      ? ACCENT
+      ? theme.onAccent
       : variant === 'secondary'
-        ? theme.backgroundElement
-        : 'transparent';
-  const fg = variant === 'primary' ? '#1a1208' : theme.text;
+        ? theme.primary
+        : theme.text;
+  const borderColor =
+    variant === 'secondary' ? theme.primary : variant === 'ghost' ? theme.border : 'transparent';
 
   return (
     <Pressable
@@ -46,8 +51,7 @@ export function Button({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
-        { backgroundColor: bg, opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1 },
-        variant === 'ghost' && { borderWidth: 1, borderColor: theme.backgroundSelected },
+        { backgroundColor: bg, borderColor, opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1 },
         style,
       ]}
       {...rest}>
@@ -63,13 +67,14 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     height: 52,
-    borderRadius: 14,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   label: {
+    fontFamily: Fonts.sansSemiBold,
     fontSize: 16,
-    fontWeight: '600',
   },
 });

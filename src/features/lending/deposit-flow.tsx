@@ -287,7 +287,7 @@ function DepositForm({
                     styles.chip,
                     { backgroundColor: active ? ACCENT : theme.backgroundSelected },
                   ]}>
-                  <ThemedText type="small" style={{ color: active ? '#1a1208' : theme.text }}>
+                  <ThemedText type="small" style={{ color: active ? '#241a0c' : theme.text }}>
                     {t.name} · {formatApy(t.apy)}
                   </ThemedText>
                 </Pressable>
@@ -381,7 +381,7 @@ function TermChip({
       accessibilityRole="button"
       onPress={onPress}
       style={[styles.chip, { backgroundColor: active ? ACCENT : theme.backgroundSelected }]}>
-      <ThemedText type="small" style={{ color: active ? '#1a1208' : theme.text }}>
+      <ThemedText type="small" style={{ color: active ? '#241a0c' : theme.text }}>
         {label}
       </ThemedText>
     </Pressable>
@@ -612,7 +612,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10 },
   input: { fontSize: 28, fontWeight: '600', paddingVertical: 4 },
-  error: { color: '#d4534e' },
+  error: { color: '#e4645a' },
   center: { paddingVertical: 24, alignItems: 'center' },
   centerText: { textAlign: 'center' },
   contractScroll: { maxHeight: 260 },

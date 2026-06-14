@@ -74,7 +74,7 @@ export default function OnrampScreen() {
               ]}>
               <ThemedText
                 type="small"
-                style={{ color: active ? '#1a1208' : theme.text }}>
+                style={{ color: active ? '#241a0c' : theme.text }}>
                 {t.label}
               </ThemedText>
             </Pressable>

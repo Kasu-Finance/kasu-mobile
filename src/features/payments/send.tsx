@@ -20,7 +20,7 @@ type SendState =
   | { phase: 'confirmed'; txHash: string }
   | { phase: 'error'; message: string };
 
-const ERROR_RED = '#e5484d';
+const ERROR_RED = '#e4645a';
 const OK_GREEN = '#30a46c';
 
 /**

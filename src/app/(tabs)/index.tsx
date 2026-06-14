@@ -96,5 +96,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionGlyph: { fontSize: 24, fontWeight: '600', color: '#1a1208' },
+  actionGlyph: { fontSize: 24, fontWeight: '600', color: '#241a0c' },
 });

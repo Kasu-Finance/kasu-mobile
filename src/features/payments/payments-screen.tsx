@@ -34,7 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: '#f5a623',
   paid: '#30a46c',
   expired: '#8b8d98',
-  cancelled: '#e5484d',
+  cancelled: '#e4645a',
 };
 
 /**

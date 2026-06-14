@@ -13,7 +13,7 @@ import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 
 import type { PaymentRequestBody, PaymentRequestResponse } from './types';
 
-const ERROR_RED = '#e5484d';
+const ERROR_RED = '#e4645a';
 
 type RequestState =
   | { phase: 'idle' }

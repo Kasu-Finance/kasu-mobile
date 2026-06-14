@@ -112,5 +112,5 @@ const styles = StyleSheet.create({
   gapSmall: { gap: 8 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   input: { fontSize: 28, fontWeight: '600', paddingVertical: 4 },
-  error: { color: '#d4534e' },
+  error: { color: '#e4645a' },
 });

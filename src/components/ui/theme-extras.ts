@@ -1,2 +1,2 @@
-/** The one brand accent, shared with the web app (Privy accent). */
-export const ACCENT = '#c4996c';
+/** The brand brass accent (matches the web design system `--primary`). */
+export const ACCENT = '#d29e61';

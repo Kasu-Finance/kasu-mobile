@@ -256,7 +256,7 @@ function StatusPill({ status }: { status: StrategyStatus }) {
   const live = status === 'Live';
   return (
     <View style={[styles.pill, { backgroundColor: live ? ACCENT : theme.backgroundSelected }]}>
-      <ThemedText type="small" style={{ color: live ? '#1a1208' : theme.textSecondary }}>
+      <ThemedText type="small" style={{ color: live ? '#241a0c' : theme.textSecondary }}>
         {status}
       </ThemedText>
     </View>
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 16,
     borderRadius: 16,
-    backgroundColor: 'rgba(196, 153, 108, 0.12)',
+    backgroundColor: 'rgba(210,158,97,0.12)',
   },
   apyPanelLeft: { gap: 2, flexShrink: 1 },
   apyValue: { color: ACCENT, fontSize: 32, lineHeight: 38 },
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 999,
-    backgroundColor: 'rgba(196, 153, 108, 0.16)',
+    backgroundColor: 'rgba(210,158,97,0.16)',
   },
   termChipText: { color: ACCENT },
   pill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999 },

@@ -105,7 +105,7 @@ export default function ActivityScreen() {
 }
 
 /** Positive (green) accent for inflows — matches the activity row. */
-const POSITIVE = '#3fb27f';
+const POSITIVE = '#84a45f';
 
 const styles = StyleSheet.create({
   container: { gap: 16 },

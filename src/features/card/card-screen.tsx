@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ACCENT } from '@/components/ui/theme-extras';
+import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 
@@ -18,7 +19,7 @@ import { useCardStatus } from './use-card-status';
 import { useCardTopup } from './use-card-topup';
 import { type CardStatus } from './types';
 
-const ERROR_COLOR = '#d4534e';
+const ERROR_COLOR = '#e4645a';
 
 /**
  * Gnosis Pay card (F6). Renders by status:
@@ -319,20 +320,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardBrand: {
-    color: '#1a1208',
+    color: '#241a0c',
     letterSpacing: 2,
   },
   cardFooter: {
     gap: 4,
   },
   cardNumber: {
-    color: '#1a1208',
+    fontFamily: Fonts.sansBold,
+    color: '#241a0c',
     fontSize: 24,
     lineHeight: 30,
     fontVariant: ['tabular-nums'],
   },
   cardMeta: {
-    color: '#1a1208',
+    color: '#241a0c',
     opacity: 0.7,
   },
 });

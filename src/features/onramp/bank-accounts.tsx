@@ -170,7 +170,7 @@ function AddBankAccountForm({
                     ]}>
                     <ThemedText
                       type="small"
-                      style={{ color: selected ? '#1a1208' : theme.text }}>
+                      style={{ color: selected ? '#241a0c' : theme.text }}>
                       {opt.label}
                     </ThemedText>
                   </Pressable>

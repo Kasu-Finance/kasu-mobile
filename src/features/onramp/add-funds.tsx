@@ -195,6 +195,6 @@ function prettyLabel(key: string): string {
 
 const styles = StyleSheet.create({
   gap: { gap: 12 },
-  error: { color: '#d4534e' },
+  error: { color: '#e4645a' },
   mono: { fontVariant: ['tabular-nums'] },
 });

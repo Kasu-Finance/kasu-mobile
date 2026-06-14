@@ -6,14 +6,14 @@ import { useTheme } from '@/hooks/use-theme';
 import type { ActivityItem, ActivityKind } from './types';
 
 /** Positive (green) accent for inflows. Neutral amounts use the theme text. */
-const POSITIVE = '#3fb27f';
+const POSITIVE = '#84a45f';
 
 /** Per-kind dot colour + single-character glyph. */
 const KIND_META: Record<ActivityKind, { color: string; glyph: string }> = {
-  deposit: { color: '#3fb27f', glyph: '↓' },
-  yield: { color: '#c4996c', glyph: '✦' },
-  withdrawal: { color: '#5b8def', glyph: '↑' },
-  cancellation: { color: '#9aa0aa', glyph: '×' },
+  deposit: { color: '#84a45f', glyph: '↓' },
+  yield: { color: '#d29e61', glyph: '✦' },
+  withdrawal: { color: '#7d7d83', glyph: '↑' },
+  cancellation: { color: '#7d7d83', glyph: '×' },
 };
 
 /**

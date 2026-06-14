@@ -145,7 +145,7 @@ export default function LoginScreen() {
           )}
 
           {error ? (
-            <ThemedText type="small" style={{ color: '#e5484d' }}>
+            <ThemedText type="small" style={{ color: '#e4645a' }}>
               {error}
             </ThemedText>
           ) : null}

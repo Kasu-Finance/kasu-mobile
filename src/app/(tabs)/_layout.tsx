@@ -1,13 +1,21 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { Colors } from '@/constants/theme';
+
 /**
- * Authenticated tab navigator (SDK 56 NativeTabs). Providers (`SdkProvider`,
- * `NotificationsProvider`) live in the root layout so they also cover root-level
- * routes outside this group.
+ * Authenticated tab navigator (SDK 56 NativeTabs), tinted to the Kasu brand:
+ * brass active tint on a brand-dark bar. Providers (`SdkProvider`,
+ * `NotificationsProvider`) live in the root layout so they also cover
+ * root-level routes outside this group.
  */
 export default function TabsLayout() {
   return (
-    <NativeTabs>
+    <NativeTabs
+      tintColor={Colors.dark.primary}
+      backgroundColor={Colors.dark.background}
+      iconColor={Colors.dark.textSecondary}
+      indicatorColor={Colors.dark.primaryPressed}
+      rippleColor={Colors.dark.primaryPressed}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="house" />

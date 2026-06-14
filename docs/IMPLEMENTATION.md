@@ -14,8 +14,9 @@ payments, push notifications, Gnosis Pay card.
 - The app boots into a **read-only DEMO mode** (see below): Home shows the VISA
   card + "Weekly top up" + the real portfolio; Lend shows real strategies +
   details; Activity shows the tx feed; Profile shows identity.
-- Screens are **functionally complete** but **not yet styled to the Kasu
-  brand** — that's the next phase (see Planning).
+- Screens are **functionally complete** and **styled to the Kasu brand**
+  (dark-only, brass `#d29e61`, DM Sans + Crimson Text serif headings, gold-bonsai
+  VISA card). See "Branding" below.
 
 ### Demo mode (important)
 Privy mobile login requires Apple **App Attest** / Play Integrity, which **cannot
@@ -28,6 +29,32 @@ complete on the iOS Simulator** (`invalid_native_app_id`). So:
   numbers without a logged-in wallet. `useViewAddress()` = `connectedAddress ||
   demoPortfolioAddress`. No PII is surfaced (KYC etc. key off the connected
   address, which is null in demo).
+
+## Branding (Kasu brand pass)
+
+The app is restyled to the web design system (`kasu-ui/src/app/globals.css`).
+**JS-only** — no native rebuild (fonts load at runtime via `expo-font`;
+`react-native-svg` + `expo-image` were already linked).
+
+- **Dark-only.** `useTheme()` always returns the brand palette; the root layout
+  forces `DarkTheme` + `userInterfaceStyle: "dark"` + `StatusBar light`.
+- **Tokens** live in `src/constants/theme.ts` (`Colors` — bg `#1f1f24`, card
+  `#2b2b30`, brass `primary #d29e61`, `onAccent #241a0c`, `success #84a45f`,
+  `destructive #e4645a`, …) plus `Radius`. The legacy accent `#c4996c` →
+  `#d29e61`; `ACCENT` in `theme-extras.ts` now equals the brass primary. All
+  previously-hardcoded hexes were mapped to brand values.
+- **Fonts** bundled via `@expo-google-fonts/{dm-sans,crimson-text}` and gated in
+  `_layout.tsx`. **Crimson Text** (serif) carries headings — `ThemedText`
+  `title`/`subtitle` are serif, so every screen heading + big number inherits it
+  automatically; **DM Sans** carries body/UI.
+- **Mark** — `src/components/ui/kasu-mark.tsx` renders the chevron via
+  react-native-svg (path inlined; no svg-transformer configured). `Brand` =
+  mark + serif "Kasu".
+- **VISA card** (`visa-card.tsx`) — front: mark + serif wordmark on brand-dark,
+  brass detailing; **back: full-bleed gold bonsai** (`assets/brand/bonsai.png`,
+  downscaled to 871×1000) under a dark scrim, with PAN/EXP/CVC overlaid. Flip
+  animation unchanged.
+- **Buttons** are brass pills; **NativeTabs** tinted brass on a dark bar.
 
 ## Architecture & non-obvious gotchas
 - **Entry / polyfills** — `index.js` loads `src/lib/web3/crypto-polyfills.ts`
@@ -78,9 +105,8 @@ Backend `kasu-backend/src/mobile/` (`MobileModule`): `/mobile/kyc/{status,auth-s
   --profile preview`. Real iPhone / TestFlight needs an Apple Developer account.
 
 ## Planning — next steps
-1. **Global UI styling to the Kasu brand stylesheet** (NEXT) — the structure is
-   done; restyle every screen to Kasu's design system (colors, type, spacing,
-   components) instead of the current minimal placeholder styling.
+1. ~~**Global UI styling to the Kasu brand stylesheet**~~ ✅ **DONE** — see
+   "Branding" above (dark-only, brass + serif, gold-bonsai VISA card).
 2. **Real login on a device** — Android APK on a real phone (Play Integrity) or
    iPhone via Apple Developer enrollment; then disable the bypass for those builds.
 3. **Wire the stubs** — Wayex session/on-ramp + off-ramp (`/wayex/deposit-crypto`

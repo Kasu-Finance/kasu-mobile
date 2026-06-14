@@ -167,7 +167,7 @@ function GateBody({
           : 'A quick identity check is required before moving funds.'}
       </ThemedText>
       {error && (
-        <ThemedText type="small" style={{ color: '#d4534e' }}>
+        <ThemedText type="small" style={{ color: '#e4645a' }}>
           {error.message}
         </ThemedText>
       )}

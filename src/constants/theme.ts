@@ -1,55 +1,59 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Kasu brand theme tokens — ported from the web design system
+ * (`kasu-ui/src/app/globals.css`). The app is **dark-only**: `Colors.light` and
+ * `Colors.dark` are intentionally identical so any consumer that keys off the
+ * system scheme still renders the brand dark palette.
  */
 
 import '@/global.css';
 
 import { Platform } from 'react-native';
 
-export const Colors = {
-  light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-  },
+/** Brand palette (brass on near-black). Single source of truth. */
+const Brand = {
+  // Surfaces
+  background: '#1f1f24',
+  backgroundElement: '#2b2b30', // = card
+  backgroundSelected: '#37373d', // = card elevated
+  card: '#2b2b30',
+  cardElevated: '#37373d',
+  border: 'rgba(255,255,255,0.06)',
+  // Text
+  text: '#ebebef',
+  textSecondary: '#7d7d83',
+  // Brass accent
+  primary: '#d29e61',
+  primaryHover: '#e0b98b',
+  primaryPressed: '#a68057',
+  onAccent: '#241a0c', // text/glyphs on a brass fill
+  // Status
+  success: '#84a45f',
+  successSoft: 'rgba(132,164,95,0.15)',
+  destructive: '#e4645a',
+  destructiveSoft: 'rgba(228,100,90,0.15)',
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export const Colors = {
+  light: Brand,
+  dark: Brand,
+} as const;
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+export type ThemeColor = keyof typeof Brand;
+
+/**
+ * Bundled brand fonts (loaded in the root layout via `expo-font`). Custom fonts
+ * ignore `fontWeight`, so each weight is its own family. **Crimson Text** (serif)
+ * carries headings — the brand's signature; **DM Sans** carries body/UI.
+ */
+export const Fonts = {
+  sans: 'DMSans_400Regular',
+  sansMedium: 'DMSans_500Medium',
+  sansSemiBold: 'DMSans_600SemiBold',
+  sansBold: 'DMSans_700Bold',
+  serif: 'CrimsonText_400Regular',
+  serifBold: 'CrimsonText_600SemiBold',
+  mono: Platform.select({ ios: 'ui-monospace', default: 'monospace' }),
+} as const;
 
 export const Spacing = {
   half: 2,
@@ -59,6 +63,14 @@ export const Spacing = {
   four: 24,
   five: 32,
   six: 64,
+} as const;
+
+/** Brand radii (web: cards 8–12, pills 999). */
+export const Radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  pill: 999,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

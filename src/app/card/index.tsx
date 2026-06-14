@@ -94,7 +94,7 @@ export default function CardOnboardRoute() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  error: { color: '#d4534e' },
+  error: { color: '#e4645a' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

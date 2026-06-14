@@ -146,7 +146,7 @@ function StatusPill({ status }: { status: StrategyStatus }) {
         styles.pill,
         { backgroundColor: live ? ACCENT : theme.backgroundSelected },
       ]}>
-      <ThemedText type="small" style={{ color: live ? '#1a1208' : theme.textSecondary }}>
+      <ThemedText type="small" style={{ color: live ? '#241a0c' : theme.textSecondary }}>
         {status}
       </ThemedText>
     </View>
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(196, 153, 108, 0.12)',
+    backgroundColor: 'rgba(210,158,97,0.12)',
   },
   apyPanelLeft: { gap: 2, flexShrink: 1 },
   apyValue: { color: ACCENT, fontSize: 16 },
