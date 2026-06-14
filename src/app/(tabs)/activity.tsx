@@ -1,24 +1,29 @@
 import { useState } from 'react';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '@/components/ui/screen';
 import { Segmented } from '@/components/ui/segmented';
 import { ActivityScreen } from '@/features/activity';
 import PaymentsScreen from '@/features/payments/payments-screen';
 import NotificationsScreen from '@/features/notifications/notifications-screen';
+import { useTheme } from '@/hooks/use-theme';
 
 type Seg = 'activity' | 'payments' | 'alerts';
 
 /**
  * Activity tab — the "Recent activity" feed (deposits/yield/withdrawals),
- * P2P payments (F4), and the notification feed (F5). Each child screen renders
- * bare, so the selected one is wrapped in Screen here.
+ * P2P payments (F4), and the notification feed (F5). The segmented switcher is
+ * pinned above the scrolling body, so it carries the top safe-area inset itself
+ * (the body `Screen` opts out with `edges={[]}` to avoid a double inset).
  */
 export default function ActivityTab() {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [seg, setSeg] = useState<Seg>('activity');
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: insets.top + 12 }}>
         <Segmented
           value={seg}
           onChange={(k) => setSeg(k as Seg)}
@@ -29,7 +34,7 @@ export default function ActivityTab() {
           ]}
         />
       </View>
-      <Screen>
+      <Screen edges={[]}>
         {seg === 'activity' ? (
           <ActivityScreen />
         ) : seg === 'payments' ? (

@@ -1,20 +1,24 @@
 import type { PropsWithChildren } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { type Edge, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/hooks/use-theme';
 
-/** Standard screen wrapper: themed background, safe-area, optional scroll. */
+/**
+ * Standard screen wrapper: themed background, safe-area, optional scroll.
+ * `edges` controls which safe-area insets are applied (default top only). Pass
+ * `edges={[]}` when an ancestor already handles the top inset (e.g. a fixed
+ * header above the scroll body).
+ */
 export function Screen({
   children,
   scroll = true,
-}: PropsWithChildren<{ scroll?: boolean }>) {
+  edges = ['top'],
+}: PropsWithChildren<{ scroll?: boolean; edges?: readonly Edge[] }>) {
   const theme = useTheme();
-  const Body = (
-    <View style={styles.body}>{children}</View>
-  );
+  const Body = <View style={styles.body}>{children}</View>;
   return (
-    <SafeAreaView style={[styles.flex, { backgroundColor: theme.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.flex, { backgroundColor: theme.background }]} edges={edges}>
       {scroll ? (
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {children}
