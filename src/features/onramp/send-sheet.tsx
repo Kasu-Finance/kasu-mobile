@@ -61,9 +61,6 @@ export function SendSheet({
           // TODO: wire on-chain transfer
         }}
       />
-      <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
-        Sending is disabled in demo mode.
-      </ThemedText>
     </BottomSheet>
   );
 }
@@ -85,5 +82,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 16,
   },
-  note: { textAlign: 'center' },
 });

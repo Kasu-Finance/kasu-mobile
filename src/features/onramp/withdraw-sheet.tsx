@@ -77,7 +77,7 @@ export function WithdrawSheet({
         />
       </View>
 
-      {/* Disabled in demo — no backend off-ramp session. */}
+      {/* Disabled until the Wayex off-ramp session is wired. */}
       <Button
         title="Withdraw"
         disabled
@@ -85,9 +85,6 @@ export function WithdrawSheet({
           // TODO: wire Wayex off-ramp
         }}
       />
-      <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
-        Withdrawals are disabled in demo mode.
-      </ThemedText>
     </BottomSheet>
   );
 }
@@ -119,5 +116,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  note: { textAlign: 'center' },
 });

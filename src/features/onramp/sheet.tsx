@@ -1,3 +1,4 @@
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { type PropsWithChildren, useEffect } from 'react';
 import {
   Modal,
@@ -17,6 +18,9 @@ import Animated, {
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+
+/** Liquid glass (iOS 26+) for the sheet panel; solid surface elsewhere. */
+const GLASS = isLiquidGlassAvailable();
 
 /** How far below the screen the panel starts before sliding up (px). */
 const SHEET_TRAVEL = 800;
@@ -61,7 +65,18 @@ export function BottomSheet({
         <Pressable style={styles.backdropFill} onPress={onClose} accessibilityRole="button" />
         <SafeAreaView edges={['bottom']} style={styles.safe}>
           <Animated.View
-            style={[styles.panel, { backgroundColor: theme.background }, panelStyle]}>
+            style={[
+              styles.panel,
+              GLASS ? null : { backgroundColor: theme.background },
+              panelStyle,
+            ]}>
+            {GLASS && (
+              <GlassView
+                style={styles.glassFill}
+                glassEffectStyle="regular"
+                tintColor="rgba(31,31,36,0.55)"
+              />
+            )}
             <View style={styles.grabber} />
             <View style={styles.header}>
               <ThemedText type="subtitle" style={styles.title}>
@@ -119,7 +134,9 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 24,
     gap: 16,
+    overflow: 'hidden',
   },
+  glassFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   grabber: {
     alignSelf: 'center',
     width: 40,

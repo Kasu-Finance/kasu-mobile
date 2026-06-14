@@ -45,10 +45,6 @@ export default function MyBankRoute() {
           <ReadOnlyField label="IBAN" value={DEMO_LINKED_BANK.iban} />
           <ReadOnlyField label="BIC" value={DEMO_LINKED_BANK.bic} />
         </Card>
-        <ThemedText type="small" themeColor="textSecondary">
-          Demo account — read only. Adding or editing banks requires a verified
-          Wayex session.
-        </ThemedText>
       </View>
     </SafeAreaView>
   );
