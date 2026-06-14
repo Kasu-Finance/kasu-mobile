@@ -1,9 +1,9 @@
 import type { Strategy } from '@kasufinance/kasu-sdk';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
-import { ACCENT } from '@/components/ui/theme-extras';
+import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatUsd } from '@/lib/format';
 
@@ -16,16 +16,18 @@ import {
 } from './lib/strategy-display';
 import { useStrategies } from './use-strategies';
 
+/** Terracotta used for the "Full" status pill (matches web `--tag-full`). */
+const TAG_FULL = '#ba6b56';
+
 export interface StrategiesListProps {
   /** Tapping a strategy card surfaces it (caller routes to the detail screen). */
   onSelect: (strategy: Strategy) => void;
 }
 
 /**
- * Lists the active lending strategies as clean, tappable cards. Each card shows
- * the name, a status pill (Live / Full), asset class, the tranche APY range,
- * TVL, and remaining capacity. Obvious dead $0-TVL placeholder duplicates are
- * filtered out so the live strategies stay prominent.
+ * Lists the active lending strategies as cards styled to the Kasu web design:
+ * a serif title + status pill, an elevated Net APY panel with the headline brass
+ * figure, and divided TVL / capacity rows. Dead $0-TVL placeholders are filtered.
  */
 export function StrategiesList({ onSelect }: StrategiesListProps) {
   const { data, isLoading, isError, refetch } = useStrategies();
@@ -75,6 +77,7 @@ export function StrategiesList({ onSelect }: StrategiesListProps) {
 }
 
 function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () => void }) {
+  const theme = useTheme();
   const status = deriveStrategyStatus(strategy);
   const apyRange = formatStrategyApyRange(strategy);
   const flow = trancheFlow(strategy);
@@ -87,9 +90,7 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
       style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
       <Card style={styles.cardGap}>
         <View style={styles.headerRow}>
-          <ThemedText type="smallBold" style={styles.title}>
-            {strategy.name}
-          </ThemedText>
+          <Text style={[styles.title, { color: theme.text }]}>{strategy.name}</Text>
           <StatusPill status={status} />
         </View>
 
@@ -99,8 +100,12 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
           </ThemedText>
         )}
 
-        {/* Net APY panel — the headline number, with the tranche flow beneath. */}
-        <View style={styles.apyPanel}>
+        {/* Net APY — elevated panel: label + tranche flow left, headline value right. */}
+        <View
+          style={[
+            styles.apyPanel,
+            { backgroundColor: theme.cardElevated, borderColor: theme.border },
+          ]}>
           <View style={styles.apyPanelLeft}>
             <ThemedText type="small">Net APY</ThemedText>
             {flow.length > 0 && (
@@ -109,15 +114,14 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
               </ThemedText>
             )}
           </View>
-          <ThemedText type="smallBold" style={styles.apyValue}>
-            {apyRange}
-          </ThemedText>
+          <Text style={[styles.apyValue, { color: theme.primary }]}>{apyRange}</Text>
         </View>
 
-        <View style={styles.metaRow}>
-          <Meta label="TVL" value={formatUsd(strategy.tvl.total)} />
-          <Meta
-            label="Available"
+        {/* Divided detail rows. */}
+        <View>
+          <DetailRow label="TVL" value={formatUsd(strategy.tvl.total)} divider />
+          <DetailRow
+            label="Available capacity"
             value={status === 'Full' ? 'Full' : formatUsd(strategy.availableCapacity)}
           />
         </View>
@@ -126,9 +130,14 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
   );
 }
 
-function Meta({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value, divider }: { label: string; value: string; divider?: boolean }) {
+  const theme = useTheme();
   return (
-    <View style={styles.metaCol}>
+    <View
+      style={[
+        styles.detailRow,
+        divider && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border },
+      ]}>
       <ThemedText type="small" themeColor="textSecondary">
         {label}
       </ThemedText>
@@ -140,15 +149,15 @@ function Meta({ label, value }: { label: string; value: string }) {
 function StatusPill({ status }: { status: StrategyStatus }) {
   const theme = useTheme();
   const live = status === 'Live';
+  const full = status === 'Full';
+  const bg = live ? theme.success : full ? TAG_FULL : theme.backgroundSelected;
+  const fg = live || full ? '#ffffff' : theme.textSecondary;
   return (
-    <View
-      style={[
-        styles.pill,
-        { backgroundColor: live ? ACCENT : theme.backgroundSelected },
-      ]}>
-      <ThemedText type="small" style={{ color: live ? '#241a0c' : theme.textSecondary }}>
+    <View style={[styles.pill, { backgroundColor: bg }]}>
+      <Text style={[styles.pillText, { color: fg }]}>
+        {live ? '⚡ ' : ''}
         {status}
-      </ThemedText>
+      </Text>
     </View>
   );
 }
@@ -156,23 +165,33 @@ function StatusPill({ status }: { status: StrategyStatus }) {
 const styles = StyleSheet.create({
   list: { gap: 12 },
   gap: { gap: 6 },
-  cardGap: { gap: 10 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
-  title: { flex: 1 },
+  cardGap: { gap: 12 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  title: { flex: 1, fontFamily: Fonts.serifBold, fontSize: 20, lineHeight: 26 },
   apyPanel: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    padding: 16,
     borderRadius: 12,
-    backgroundColor: 'rgba(210,158,97,0.12)',
+    borderWidth: 1,
   },
   apyPanelLeft: { gap: 2, flexShrink: 1 },
-  apyValue: { color: ACCENT, fontSize: 16 },
-  metaRow: { flexDirection: 'row', gap: 24 },
-  metaCol: { gap: 2 },
-  pill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999 },
+  apyValue: { fontFamily: Fonts.serifBold, fontSize: 26, lineHeight: 30 },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+  },
+  pill: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 999 },
+  pillText: { fontFamily: Fonts.sansSemiBold, fontSize: 13 },
   center: { paddingVertical: 32, alignItems: 'center' },
 });

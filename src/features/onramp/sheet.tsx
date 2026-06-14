@@ -73,8 +73,8 @@ export function BottomSheet({
             {GLASS && (
               <GlassView
                 style={styles.glassFill}
-                glassEffectStyle="regular"
-                tintColor="rgba(31,31,36,0.55)"
+                glassEffectStyle="clear"
+                tintColor="rgba(31,31,36,0.38)"
               />
             )}
             <View style={styles.grabber} />

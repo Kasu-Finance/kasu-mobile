@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Fonts } from '@/constants/theme';
@@ -6,9 +7,11 @@ import { useTheme } from '@/hooks/use-theme';
 export interface SegmentedOption {
   key: string;
   label: string;
+  /** Optional leading icon (e.g. a flag or token logo), rendered before the label. */
+  icon?: ReactNode;
 }
 
-/** Minimal segmented control for switching between two feature views in a tab. */
+/** Minimal segmented control for switching between two or more views. */
 export function Segmented({
   options,
   value,
@@ -29,6 +32,7 @@ export function Segmented({
             accessibilityRole="button"
             onPress={() => onChange(opt.key)}
             style={[styles.item, active && { backgroundColor: theme.primary }]}>
+            {opt.icon ? <View style={styles.icon}>{opt.icon}</View> : null}
             <Text
               style={[
                 styles.label,
@@ -45,6 +49,15 @@ export function Segmented({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', borderRadius: 12, padding: 4, gap: 4 },
-  item: { flex: 1, paddingVertical: 8, borderRadius: 9, alignItems: 'center' },
+  item: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  icon: { alignItems: 'center', justifyContent: 'center' },
   label: { fontFamily: Fonts.sansSemiBold, fontSize: 14 },
 });

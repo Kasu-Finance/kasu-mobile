@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Segmented } from '@/components/ui/segmented';
 import { ACCENT } from '@/components/ui/theme-extras';
+import { UsdcMark } from '@/components/ui/usdc-mark';
 import { useTheme } from '@/hooks/use-theme';
 import { useViewAddress } from '@/lib/web3/use-view-address';
 
@@ -23,13 +24,13 @@ import { BottomSheet, ReadOnlyField } from './sheet';
  * TODO: wire Wayex — replace the stub bank details with a real
  * `POST /wayex/deposit-fiat` response once a backend session exists.
  */
-const METHOD_OPTIONS = [
-  { key: 'EUR', label: '🇪🇺 EUR' },
-  { key: 'USD', label: '🇺🇸 USD' },
-  { key: 'USDC', label: 'USDC' },
-] as const;
+type Method = 'EUR' | 'USD' | 'USDC';
 
-type Method = (typeof METHOD_OPTIONS)[number]['key'];
+const METHOD_OPTIONS: { key: Method; label: string; icon: ReactNode }[] = [
+  { key: 'EUR', label: 'EUR', icon: <Text style={{ fontSize: 15 }}>🇪🇺</Text> },
+  { key: 'USD', label: 'USD', icon: <Text style={{ fontSize: 15 }}>🇺🇸</Text> },
+  { key: 'USDC', label: 'USDC', icon: <UsdcMark size={16} /> },
+];
 
 export function AddMoneySheet({
   visible,
