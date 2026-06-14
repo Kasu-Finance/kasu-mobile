@@ -1,16 +1,19 @@
 {
   "expo": {
-    "name": "kasu-mobile",
-    "slug": "kasu-mobile",
+    "name": "Kasu",
+    "slug": "kasu",
+    "owner": "kivanov82",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kasumobile",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "finance.kasu.mobile"
     },
     "android": {
+      "package": "finance.kasu.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -34,11 +37,17 @@
             "imageWidth": 76
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6e85c6e8-e6f6-4410-94aa-4c1a12d724fd"
+      }
     }
   }
 }

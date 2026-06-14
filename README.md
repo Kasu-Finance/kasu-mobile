@@ -1,56 +1,50 @@
-# Welcome to your Expo app 👋
+# Kasu Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native (Expo SDK 56) neobank wallet for **lending to Kasu**.
 
-## Get started
+> **Spend yield from your VISA card** — the yield you earn lending to Kasu pools is
+> automatically topped up onto your VISA debit card.
 
-1. Install dependencies
+## What it does
 
-   ```bash
-   npm install
-   ```
+- **Wallet & login** — Privy embedded wallets (email / Google / Apple / external
+  wallet), shared with the Kasu web app.
+- **Home** — your VISA card, a *"weekly top up"* counter (the $ yield credited to
+  the card at the next epoch), and your lending portfolio.
+- **Lend** — browse Kasu strategies and view per-strategy details (APY, TVL,
+  capacity, tranches).
+- **Activity** — deposits, withdrawals, and yield, with tap-to-expand details.
+- **Add funds / Withdraw** — fiat on/off-ramp via Wayex; deposit USDC directly.
+- **Card** — a Gnosis Pay virtual debit card.
 
-2. Start the app
+## Tech
 
-   ```bash
-   npx expo start
-   ```
+Expo SDK 56 · expo-router · TypeScript · ethers v5 · `@privy-io/expo` ·
+`@kasufinance/kasu-sdk` · TanStack Query. Backend: the `/mobile/*` surface of
+`kasu-backend` (NestJS).
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Getting started
 
 ```bash
-npm run reset-project
+cp .env.example .env        # fill in the Privy app id + client id
+npx tsc --noEmit            # typecheck
+npx expo run:ios            # dev client (Privy + native crypto need one — not Expo Go)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Builds use [EAS](https://expo.dev/eas):
 
-### Other setup steps
+```bash
+eas build --platform ios --profile simulator   # iOS Simulator
+eas build --platform android --profile preview  # installable Android APK
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+See [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) for architecture, the demo
+mode, key gotchas, and the roadmap.
 
-## Learn more
+## Notes
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- A **demo mode** (`EXPO_PUBLIC_DEV_LOGIN_BYPASS` + `EXPO_PUBLIC_DEMO_PORTFOLIO_ADDRESS`)
+  lets the app run read-only against a real on-chain portfolio — useful on the iOS
+  Simulator, where Privy login can't complete (Apple App Attest).
+- UI is functionally complete; brand styling to the Kasu design system is the next
+  phase.
