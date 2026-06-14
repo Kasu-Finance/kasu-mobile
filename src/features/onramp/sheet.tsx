@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import { type PropsWithChildren, useEffect } from 'react';
 import {
   Modal,
   Pressable,
@@ -8,10 +8,18 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { SlideInDown } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+
+/** How far below the screen the panel starts before sliding up (px). */
+const SHEET_TRAVEL = 800;
 
 /**
  * A bottom-sheet style `Modal` shell: dimmed backdrop, a rounded panel pinned to
@@ -29,19 +37,31 @@ export function BottomSheet({
   onClose: () => void;
 }>) {
   const theme = useTheme();
+
+  // Backdrop appears instantly; only the PANEL slides up. Reanimated layout
+  // animations (`entering`) don't fire inside a RN Modal, so animate translateY
+  // explicitly (this is the same approach the VisaCard flip uses).
+  const translateY = useSharedValue(SHEET_TRAVEL);
+  useEffect(() => {
+    translateY.value = visible
+      ? withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) })
+      : SHEET_TRAVEL;
+  }, [visible, translateY]);
+  const panelStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
     <Modal
       visible={visible}
       animationType="none"
       transparent
       onRequestClose={onClose}>
-      {/* Backdrop appears instantly (no slide); only the panel slides up. */}
       <View style={styles.backdrop}>
         <Pressable style={styles.backdropFill} onPress={onClose} accessibilityRole="button" />
         <SafeAreaView edges={['bottom']} style={styles.safe}>
           <Animated.View
-            entering={SlideInDown.duration(240)}
-            style={[styles.panel, { backgroundColor: theme.background }]}>
+            style={[styles.panel, { backgroundColor: theme.background }, panelStyle]}>
             <View style={styles.grabber} />
             <View style={styles.header}>
               <ThemedText type="subtitle" style={styles.title}>
