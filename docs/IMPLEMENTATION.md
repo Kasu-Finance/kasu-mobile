@@ -56,6 +56,35 @@ The app is restyled to the web design system (`kasu-ui/src/app/globals.css`).
   animation unchanged.
 - **Buttons** are brass pills; **NativeTabs** tinted brass on a dark bar.
 
+## UI refinements (since the branding pass)
+
+All JS-only; shipped on `master` (latest `c74859d`, pushed to origin).
+
+- **Add money sheet** (`features/onramp/add-money-sheet.tsx`) — reworked to a single
+  **EUR / USD / USDC** selector (no more SEPA/Debit-card rows). EUR/USD show the
+  bank-transfer IBAN/BIC/Reference directly; **USDC** is the on-chain Base address
+  + copy button (NOT a Wayex rail). `Segmented` now supports a leading `icon`
+  (`SegmentedOption.icon`); USDC uses `src/components/ui/usdc-mark.tsx`
+  (react-native-svg token logo) so it aligns with the EUR/USD flags.
+- **Glass** — the shared bottom sheet (`features/onramp/sheet.tsx`, used by Add
+  money / Withdraw / Send **and** the Activity transaction-detail dialog) renders
+  `expo-glass-effect` `GlassView` on iOS 26+ (`glassEffectStyle="regular"`,
+  `tintColor` `rgba(31,31,36,0.45)`); solid `theme.background` fallback elsewhere
+  (gated by `isLiquidGlassAvailable()`).
+- **Lend strategy cards** (`features/lending/strategies-list.tsx`) — restyled to the
+  web `strategy-card`: serif title, asset-class line, an **elevated Net APY panel**
+  (`cardElevated` bg + border, big brass serif figure), green **⚡ Live** /
+  terracotta **Full** status pill, and divided TVL / capacity rows.
+- **Splash** — branded: white Kasu logo on `#1f1f24` (`assets/brand/splash-logo.png`,
+  wired in `app.json`'s `expo-splash-screen`). NOTE: keep it a single (non-`dark`)
+  variant — a `dark` block conflicts with the forced `userInterfaceStyle: "dark"`.
+- **Removed demo disclaimer copy** — "Demo only…" / "Withdrawals are disabled…" /
+  "Demo account — read only…" / "Sending is disabled…".
+- **Safe-area fix** — `Screen` gained an `edges` prop (default `['top']`). The
+  Activity tab pins its segmented switcher above the scroll body, so the switcher
+  carries the top inset (`insets.top + 12`) and the body `Screen edges={[]}` opts
+  out — fixes the brass segment that used to render under the status bar.
+
 ## Architecture & non-obvious gotchas
 - **Entry / polyfills** — `index.js` loads `src/lib/web3/crypto-polyfills.ts`
   before `expo-router/entry` (ethers/SDK need `getRandomValues`, Buffer, etc.).
@@ -98,11 +127,19 @@ Backend `kasu-backend/src/mobile/` (`MobileModule`): `/mobile/kyc/{status,auth-s
 `/mobile/payments/*`, `/mobile/notifications/register-push`, `/mobile/card/*`.
 
 ## How to run / build
-- Local: `cp .env.example .env`, fill the Privy ids; `npx expo run:ios` (needs a
-  dev client — Privy + native crypto). Typecheck: `npx tsc --noEmit`.
+- Typecheck: `npx tsc --noEmit`. Lint: `npx expo lint` (note: a couple of
+  pre-existing `set-state-in-effect` / `array-type` items are unrelated noise).
+- ⚠️ **`expo run:ios` (local dev client) does NOT work on this Mac** — CocoaPods is
+  broken (npm `pod` squatter + brew cocoapods missing `ffi` under Ruby 4.0). Use
+  EAS instead. Fixing it (then hot-reload works) is noted in the auto-memory.
 - EAS (authed as `kivanov82`, project `@kivanov82/kasu`): iOS Simulator =
-  `eas build -p ios --profile simulator`; Android APK = `eas build -p android
-  --profile preview`. Real iPhone / TestFlight needs an Apple Developer account.
+  `eas build -p ios --profile simulator --non-interactive`; Android APK =
+  `eas build -p android --profile preview --non-interactive`. **Install the latest
+  sim build:** `eas build:run -p ios --latest` (then it boots into the demo).
+  Real iPhone / TestFlight needs an Apple Developer account.
+- **Reminder:** UI changes are JS-only but the installed sim build is a *release*
+  build (no Metro) — to SEE a change you must rebuild + `build:run` again, OR fix
+  the local dev client. Don't assume a push is visible on the sim.
 
 ## Planning — next steps
 1. ~~**Global UI styling to the Kasu brand stylesheet**~~ ✅ **DONE** — see
