@@ -1,5 +1,5 @@
 import type { Strategy, StrategyTranche } from '@kasufinance/kasu-sdk';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -18,11 +18,11 @@ import { formatApy, formatUnits, formatUsd } from '@/lib/format';
 import { useSdk } from '@/lib/sdk/use-sdk';
 import { getChain } from '@/lib/web3/chains';
 import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
-import { useViewAddress } from '@/lib/web3/use-view-address';
 import { useStableBalance } from '@/lib/web3/use-balance';
 
 import { parseFormattedMessage } from './lib/contract-types';
 import { KycGate } from '@/features/kyc';
+import { haptics } from '@/lib/haptics';
 import { DEPOSIT_STEP_LABELS, type DepositStepId, fmt } from './lib/deposit-step-copy';
 import { useDeposit, type DepositPhase } from './use-deposit';
 
@@ -42,12 +42,20 @@ export interface DepositFlowProps {
  */
 export function DepositFlow({ strategy, onClose }: DepositFlowProps) {
   const { chainId } = useSdk();
-  const { signer, address } = useEthersSigner();
+  const { address } = useEthersSigner();
   const stable = getChain(chainId).stableAsset;
   const balanceQuery = useStableBalance(address, chainId);
 
   const deposit = useDeposit();
   const { state } = deposit;
+
+  // Physical confirmation for the money moments: success when the deposit
+  // lands, error when it fails, a soft warning when the user backs out.
+  useEffect(() => {
+    if (state.phase === 'success') haptics.success();
+    else if (state.phase === 'error') haptics.error();
+    else if (state.phase === 'declined') haptics.warning();
+  }, [state.phase]);
 
   // Form state — owned here, handed to the orchestrator on Continue.
   const [tranche, setTranche] = useState<StrategyTranche | null>(
@@ -55,10 +63,6 @@ export function DepositFlow({ strategy, onClose }: DepositFlowProps) {
   );
   const [fixedTermConfigId, setFixedTermConfigId] = useState<string>('0');
   const [amount, setAmount] = useState('');
-
-  const selectedFixedTerm = tranche?.fixedTermOptions.find(
-    (o) => o.configId === fixedTermConfigId,
-  );
 
   // Reset the fixed-term selection if the user switches tranche.
   const onSelectTranche = (t: StrategyTranche) => {

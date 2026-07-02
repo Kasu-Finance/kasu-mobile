@@ -13,6 +13,7 @@ import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import { KasuMark } from './kasu-mark';
+import { haptics } from '@/lib/haptics';
 
 const bonsai = require('../../../assets/brand/bonsai.png');
 
@@ -70,6 +71,7 @@ export function VisaCard({
   }));
 
   const toggle = () => {
+    haptics.press();
     const next = !flipped;
     setFlipped(next);
     progress.value = withTiming(next ? 1 : 0, { duration: 450 });

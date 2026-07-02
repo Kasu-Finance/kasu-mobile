@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -16,6 +16,7 @@ import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 
 import { useCardOnboard } from './use-card-onboard';
 import { useCardStatus } from './use-card-status';
+import { haptics } from '@/lib/haptics';
 import { useCardTopup } from './use-card-topup';
 import { type CardStatus } from './types';
 
@@ -37,6 +38,16 @@ export default function CardScreen() {
   const theme = useTheme();
   const { address } = useEthersSigner();
   const { status, last4, isLoading, isFetching, refetch } = useCardStatus(address);
+
+  // Celebrate the card going live — only on a transition observed while
+  // mounted, not when the screen opens with an already-active card.
+  const prevStatus = useRef<CardStatus | null>(null);
+  useEffect(() => {
+    if (prevStatus.current && prevStatus.current !== 'active' && status === 'active') {
+      haptics.success();
+    }
+    prevStatus.current = status;
+  }, [status]);
 
   if (!address) {
     return (

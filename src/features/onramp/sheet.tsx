@@ -18,6 +18,7 @@ import Animated, {
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 /** Liquid glass (iOS 26+) for the sheet panel; solid surface elsewhere. */
 const GLASS = isLiquidGlassAvailable();
@@ -46,6 +47,10 @@ export function BottomSheet({
   // animations (`entering`) don't fire inside a RN Modal, so animate translateY
   // explicitly (this is the same approach the VisaCard flip uses).
   const translateY = useSharedValue(SHEET_TRAVEL);
+  useEffect(() => {
+    if (visible) haptics.tap();
+  }, [visible]);
+
   useEffect(() => {
     translateY.value = visible
       ? withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) })

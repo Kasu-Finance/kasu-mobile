@@ -8,6 +8,7 @@ import { ACCENT } from '@/components/ui/theme-extras';
 import { UsdcMark } from '@/components/ui/usdc-mark';
 import { useTheme } from '@/hooks/use-theme';
 import { useViewAddress } from '@/lib/web3/use-view-address';
+import { haptics } from '@/lib/haptics';
 
 import { BottomSheet } from './sheet';
 
@@ -43,6 +44,7 @@ export function AddMoneySheet({
   const onCopy = async () => {
     if (!viewAddress) return;
     await Clipboard.setStringAsync(viewAddress);
+    haptics.select();
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };

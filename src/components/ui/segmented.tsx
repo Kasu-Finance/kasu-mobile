@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 export interface SegmentedOption {
   key: string;
@@ -30,7 +31,10 @@ export function Segmented({
           <Pressable
             key={opt.key}
             accessibilityRole="button"
-            onPress={() => onChange(opt.key)}
+            onPress={() => {
+              if (opt.key !== value) haptics.select();
+              onChange(opt.key);
+            }}
             style={[styles.item, active && { backgroundColor: theme.primary }]}>
             {opt.icon ? <View style={styles.icon}>{opt.icon}</View> : null}
             <Text

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 /**
  * Login: email-OTP + Google / Apple / wallet (matches the web app).
@@ -48,9 +49,15 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       const user = await loginWithCode({ code, email });
-      if (user) enterApp();
-      else setError('Invalid code. Please try again.');
+      if (user) {
+        haptics.success();
+        enterApp();
+      } else {
+        haptics.error();
+        setError('Invalid code. Please try again.');
+      }
     } catch {
+      haptics.error();
       setError('Invalid code. Please try again.');
     } finally {
       setBusy(false);
@@ -62,8 +69,12 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       const user = await oauthLogin({ provider });
-      if (user) enterApp();
+      if (user) {
+        haptics.success();
+        enterApp();
+      }
     } catch {
+      haptics.error();
       setError(`Could not sign in with ${provider}. Please try again.`);
     } finally {
       setBusy(false);

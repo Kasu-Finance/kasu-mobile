@@ -10,6 +10,7 @@ import {
 
 import { Fonts, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
 
@@ -30,6 +31,7 @@ export function Button({
   loading = false,
   disabled,
   style,
+  onPress,
   ...rest
 }: ButtonProps) {
   const theme = useTheme();
@@ -49,6 +51,10 @@ export function Button({
     <Pressable
       accessibilityRole="button"
       disabled={isDisabled}
+      onPress={(e) => {
+        haptics.tap();
+        onPress?.(e);
+      }}
       style={({ pressed }) => [
         styles.base,
         { backgroundColor: bg, borderColor, opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1 },
