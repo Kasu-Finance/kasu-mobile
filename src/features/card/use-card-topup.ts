@@ -16,18 +16,16 @@ type TopupInput = {
 };
 
 /**
- * `POST /mobile/card/topup` — funds the Gnosis Pay card from the user's wallet.
+ * `POST /mobile/card/topup` — tops up the Immersve card-funding balance.
  *
- * v1: the backend owns the money movement (server-side settlement or a
- * sandbox accept). We just submit the amount and surface `txHash` / `accepted`,
- * then invalidate status so any balance/last4 changes are picked up.
+ * Sandbox (simulator funding channel): the backend executes the deposit and
+ * returns `{ mode: 'simulator', accepted: true }` — one tap, no on-chain tx.
  *
- * TODO(on-chain top-up): the production path may move the on-chain transfer
- * client-side — sign + send a USDC transfer (exact-amount ERC20 approval, never
- * unlimited) from the Privy embedded wallet (`useEthersSigner`) to the Gnosis
- * Pay Safe / card-funding address, then POST the resulting `txHash` here for
- * the backend to confirm. The funding address + token/decimals + chain come
- * from the backend onboarding response and are not wired up yet.
+ * Live (universal EVM channel on Base): the backend returns
+ * `{ mode: 'onchain', depositAddress }` — the app must send a plain USDC
+ * `transfer` from the user's wallet to that Funds Storage address (spend
+ * attribution is by sender address). Wiring that transfer is W5 in
+ * docs/mobile-neobank-concept-plan.md; until then the UI surfaces the address.
  */
 export function useCardTopup() {
   return useMutation({

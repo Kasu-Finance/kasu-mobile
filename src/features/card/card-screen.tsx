@@ -217,8 +217,11 @@ function ActiveState({
     }
     try {
       const res = await topup.mutateAsync({ userAddress: address, amount: trimmed });
-      setResult({ txHash: res.txHash ?? null, accepted: res.accepted });
-      if (res.accepted) setAmount('');
+      const accepted = res.accepted ?? false;
+      // 'onchain' mode returns the Funds Storage depositAddress instead of
+      // moving money — sending the USDC transfer from the wallet is W5.
+      setResult({ txHash: res.depositAddress ?? null, accepted });
+      if (accepted) setAmount('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error.');
     }

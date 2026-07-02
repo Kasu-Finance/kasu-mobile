@@ -51,15 +51,30 @@ export default function CardOnboardRoute() {
     goBack();
   }, [address, goBack]);
 
-  // Auto-mint an onboarding URL when none was passed in.
+  // Auto-resolve the hosted KYC URL when none was passed in. The onboarding
+  // ladder (SIWE handshake → contact → KYC) may need one advance step before
+  // the status carries a kycUrl.
   useEffect(() => {
     if (url || mintedRef.current || !address) return;
     mintedRef.current = true;
     (async () => {
       try {
-        const { onboardingUrl } = await onboard.mutateAsync({ userAddress: address });
-        setUrl(onboardingUrl || null);
-        if (!onboardingUrl) setError('No onboarding link was returned.');
+        const { api } = await import('@/lib/api/client');
+        let status = (
+          await api.get('/mobile/card/status', {
+            params: { userAddress: address.toLowerCase() },
+          })
+        ).data as { status?: string; kycUrl?: string };
+        if (status.status === 'session-required') {
+          await onboard.advanceOnboarding({ userAddress: address });
+          status = (
+            await api.get('/mobile/card/status', {
+              params: { userAddress: address.toLowerCase() },
+            })
+          ).data as { status?: string; kycUrl?: string };
+        }
+        setUrl(status.kycUrl || null);
+        if (!status.kycUrl) setError('No KYC link was returned.');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Could not start onboarding.');
       }

@@ -5,30 +5,48 @@ import { api } from '@/lib/api/client';
 import {
   cardKeys,
   isCardActive,
-  type CardStatus,
+  toUiStatus,
+  type CardBackendStatus,
   type CardStatusResponse,
   type CardStatusResult,
 } from './types';
 
-const VALID_STATUSES: ReadonlySet<CardStatus> = new Set<CardStatus>([
-  'none',
-  'pending',
-  'active',
-  'frozen',
-  'rejected',
-]);
+const VALID_BACKEND_STATUSES: ReadonlySet<CardBackendStatus> =
+  new Set<CardBackendStatus>([
+    'none',
+    'session-required',
+    'kyc-required',
+    'kyc-pending',
+    'blocked',
+    'ready',
+    'active',
+  ]);
 
 /**
  * Safe default: any unreachable/failed/unknown status degrades to "none" so a
- * 501 (backend still being built) or a timeout never throws the Card tab into
- * an error state — the user just sees the onboarding CTA.
+ * backend hiccup never throws the Card tab into an error state — the user
+ * just sees the onboarding CTA.
  */
-const NONE_RESULT: CardStatusResult = { status: 'none', last4: null };
+const NONE_RESULT: CardStatusResult = {
+  status: 'none',
+  backendStatus: 'none',
+  last4: null,
+  balance: null,
+  kycUrl: null,
+  cards: [],
+  activeCardId: null,
+};
 
-function normalizeStatus(value: unknown): CardStatus {
-  return typeof value === 'string' && VALID_STATUSES.has(value as CardStatus)
-    ? (value as CardStatus)
+function normalizeBackendStatus(value: unknown): CardBackendStatus {
+  return typeof value === 'string' &&
+    VALID_BACKEND_STATUSES.has(value as CardBackendStatus)
+    ? (value as CardBackendStatus)
     : 'none';
+}
+
+function last4FromMaskedPan(maskedPan?: string): string | null {
+  const digits = (maskedPan ?? '').replace(/\D/g, '');
+  return digits.length >= 4 ? digits.slice(-4) : null;
 }
 
 async function fetchCardStatus(userAddress: string): Promise<CardStatusResult> {
@@ -37,9 +55,17 @@ async function fetchCardStatus(userAddress: string): Promise<CardStatusResult> {
       params: { userAddress: userAddress.toLowerCase() },
     });
     const data = res.data ?? {};
+    const backendStatus = normalizeBackendStatus(data.status);
+    const cards = data.cards ?? [];
+    const activeCard = cards.find((c) => c.status === 'active') ?? null;
     return {
-      status: normalizeStatus(data.status),
-      last4: data.last4 ?? null,
+      status: toUiStatus(backendStatus),
+      backendStatus,
+      last4: last4FromMaskedPan(activeCard?.maskedPan),
+      balance: data.balance ?? null,
+      kycUrl: data.kycUrl ?? null,
+      cards,
+      activeCardId: activeCard?.id ?? null,
     };
   } catch (err) {
     // 501 (not implemented), timeout, network — all degrade to "none".
@@ -49,11 +75,11 @@ async function fetchCardStatus(userAddress: string): Promise<CardStatusResult> {
 }
 
 /**
- * `useCardStatus(address?)` — reads the wallet's Gnosis Pay card status.
- * Disabled until an address exists. Errors are swallowed inside the fetcher, so
- * the query never enters an error state. The status changes out-of-band (the
- * user completes the hosted Gnosis Pay flow in a browser), so it's kept
- * fresh-ish and refetched on demand after onboarding/top-up.
+ * `useCardStatus(address?)` — the single source of truth for the Immersve
+ * onboarding state machine (see `CardBackendStatus`). Disabled until an
+ * address exists; errors are swallowed inside the fetcher so the query never
+ * enters an error state. Polls while a step is settling out-of-band (KYC
+ * review, activation block) and stops once the card is active.
  */
 export function useCardStatus(address?: string | null) {
   const query = useQuery({
@@ -61,6 +87,12 @@ export function useCardStatus(address?: string | null) {
     queryFn: () => fetchCardStatus(address!),
     enabled: Boolean(address),
     staleTime: 30 * 1000,
+    refetchInterval: (q) => {
+      const s = q.state.data?.backendStatus;
+      return s === 'kyc-pending' || s === 'blocked' || s === 'ready'
+        ? 10 * 1000
+        : false;
+    },
   });
 
   const result = query.data;
@@ -69,7 +101,11 @@ export function useCardStatus(address?: string | null) {
   return {
     result,
     status,
+    backendStatus: result?.backendStatus ?? 'none',
     last4: result?.last4 ?? null,
+    balance: result?.balance ?? null,
+    kycUrl: result?.kycUrl ?? null,
+    activeCardId: result?.activeCardId ?? null,
     isActive: isCardActive(status),
     isLoading: query.isLoading,
     isFetching: query.isFetching,

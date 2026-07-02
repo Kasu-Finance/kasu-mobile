@@ -51,8 +51,7 @@
         "EXPO_PUBLIC_KASU_API_BASE_URL": "https://backend.kasu.finance",
         "EXPO_PUBLIC_BASE_RPC_URL": "https://base.gateway.tenderly.co/14Q6tAKbOiLekQuztuDdc2",
         "EXPO_PUBLIC_DEFAULT_CHAIN": "base",
-        "EXPO_PUBLIC_DEMO_PORTFOLIO_ADDRESS": "0x4e96300bc21ea29ce73bc526d89e191ca6340242",
-        "EXPO_PUBLIC_DEV_LOGIN_BYPASS": "true"
+        "EXPO_PUBLIC_DEMO_PORTFOLIO_ADDRESS": "0x4e96300bc21ea29ce73bc526d89e191ca6340242"
       }
     }
   },
