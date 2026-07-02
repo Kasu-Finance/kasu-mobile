@@ -7,17 +7,19 @@ import { Segmented } from '@/components/ui/segmented';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { useTheme } from '@/hooks/use-theme';
 
-import { CURRENCY_OPTIONS, DEMO_LINKED_BANK, type Currency } from './demo-bank';
 import { BottomSheet } from './sheet';
 
+type Currency = 'EUR' | 'USD';
+
+const CURRENCY_OPTIONS: ReadonlyArray<{ key: Currency; label: string }> = [
+  { key: 'EUR', label: '🇪🇺 EUR' },
+  { key: 'USD', label: '🇺🇸 USD' },
+];
+
 /**
- * "Withdraw to bank" bottom sheet — the Wayex off-ramp, STUBBED for demo mode.
- *
- * EUR/USD toggle + a single pre-linked (stub) bank + an amount field. The
- * Withdraw button is disabled (no backend session in demo).
- *
- * TODO: wire Wayex off-ramp — `POST /wayex/deposit-crypto` route does not exist
- * yet (see `off-ramp.tsx`). Keep the button disabled until both land.
+ * "Withdraw to bank" bottom sheet — the fiat off-ramp. Not wired yet (needs a
+ * Wayex/Bridge session — plan W9): there is no linked bank account, so the
+ * sheet explains the state and the Withdraw button stays disabled.
  */
 export function WithdrawSheet({
   visible,
@@ -47,11 +49,9 @@ export function WithdrawSheet({
           <Text style={styles.glyph}>🏦</Text>
         </View>
         <View style={styles.bankText}>
-          <ThemedText type="smallBold">
-            {DEMO_LINKED_BANK.bankName} · {DEMO_LINKED_BANK.accountHolder}
-          </ThemedText>
+          <ThemedText type="smallBold">No linked bank account</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {DEMO_LINKED_BANK.iban}
+            Bank withdrawals are coming soon.
           </ThemedText>
         </View>
       </View>

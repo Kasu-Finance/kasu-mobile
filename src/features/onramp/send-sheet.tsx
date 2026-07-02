@@ -8,10 +8,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { BottomSheet } from './sheet';
 
 /**
- * "Send" bottom sheet — STUB. Sending on-chain USDC from the demo address is not
- * possible (no signer in read-only demo mode), so the action is disabled.
+ * "Send" bottom sheet — STUB: the on-chain USDC transfer isn't wired yet, so
+ * the action is disabled.
  *
- * TODO: wire on-chain transfer once a connected signer exists.
+ * TODO: send USDC from the embedded wallet (exact-amount, Base) via the signer.
  */
 export function SendSheet({
   visible,

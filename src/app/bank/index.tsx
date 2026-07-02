@@ -5,16 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { DEMO_LINKED_BANK } from '@/features/onramp/demo-bank';
-import { ReadOnlyField } from '@/features/onramp/sheet';
 import { useTheme } from '@/hooks/use-theme';
 
 /**
- * "My bank" — shows the single bootstrapped (stub) linked bank account in
- * read-only fields. Reached from Home → Accounts.
- *
- * TODO: wire Wayex — replace `DEMO_LINKED_BANK` with `GET /wayex/bank-accounts`
- * once a backend session exists.
+ * "My bank" — linked bank accounts. Reached from Home → Accounts. Bank linking
+ * isn't wired yet (needs the fiat rail — plan W9), so this renders an explicit
+ * empty state.
  */
 export default function MyBankRoute() {
   const theme = useTheme();
@@ -40,10 +36,11 @@ export default function MyBankRoute() {
           Linked bank account
         </ThemedText>
         <Card style={styles.card}>
-          <ReadOnlyField label="Account holder" value={DEMO_LINKED_BANK.accountHolder} />
-          <ReadOnlyField label="Bank name" value={DEMO_LINKED_BANK.bankName} />
-          <ReadOnlyField label="IBAN" value={DEMO_LINKED_BANK.iban} />
-          <ReadOnlyField label="BIC" value={DEMO_LINKED_BANK.bic} />
+          <ThemedText type="smallBold">No linked bank account yet</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Linking a bank account for fiat deposits and withdrawals is coming
+            soon. You can add money now by sending USDC on Base to your wallet.
+          </ThemedText>
         </Card>
       </View>
     </SafeAreaView>

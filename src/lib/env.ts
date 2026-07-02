@@ -26,17 +26,6 @@ export const env = {
     | 'xdc-usdc'
     | 'plume',
 
-  // Dev/demo: when 'true', the login screen skips the real Privy flow (which
-  // can't complete on the iOS Simulator due to App Attest) and enters the app
-  // read-only. Set to '' / 'false' for real builds so login works on devices.
-  devLoginBypass: (process.env.EXPO_PUBLIC_DEV_LOGIN_BYPASS ?? '') === 'true',
-
-  // Demo: when set, Home + Lend portfolio display THIS address's real Kasu
-  // positions (read-only), instead of the fresh embedded wallet's. Lets a
-  // TestFlight build show an actual lender portfolio without connecting an
-  // external wallet. Leave blank to show the logged-in wallet's own positions.
-  demoPortfolioAddress: process.env.EXPO_PUBLIC_DEMO_PORTFOLIO_ADDRESS ?? '',
-
   // Deep-link scheme (matches app.json `scheme`).
   scheme: 'kasumobile',
 } as const;

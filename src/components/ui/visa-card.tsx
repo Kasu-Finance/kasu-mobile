@@ -16,9 +16,6 @@ import { KasuMark } from './kasu-mark';
 
 const bonsai = require('../../../assets/brand/bonsai.png');
 
-/** Stub card secrets — demo build is read-only, so these are fixed. */
-const EXPIRY = '12/28';
-const CVC = '123';
 
 /**
  * The Kasu brand VISA card. Pure presentation — no chain/wallet logic.
@@ -31,13 +28,24 @@ const CVC = '123';
  */
 export function VisaCard({
   balance,
-  last4 = '4242',
+  last4,
+  pan,
+  expiry,
+  cvc,
   variant = 'dark',
 }: {
   balance: string;
-  last4?: string;
+  last4?: string | null;
+  /** Real card secrets (from the card provider's secure reveal); masked when absent. */
+  pan?: string | null;
+  expiry?: string | null;
+  cvc?: string | null;
   variant?: 'dark' | 'accent';
 }) {
+  const shownLast4 = last4 ?? (pan ? pan.slice(-4) : '····');
+  const fullPan = pan
+    ? pan.replace(/(.{4})/g, '$1 ').trim()
+    : `•••• •••• •••• ${shownLast4}`;
   const theme = useTheme();
   const accented = variant === 'accent';
   const bg = accented ? theme.primary : theme.background;
@@ -90,7 +98,7 @@ export function VisaCard({
           </View>
 
           <View style={styles.bottomRow}>
-            <Text style={[styles.pan, { color: muted }]}>•••• •••• •••• {last4}</Text>
+            <Text style={[styles.pan, { color: muted }]}>•••• •••• •••• {shownLast4}</Text>
             <Text style={[styles.visa, { color: fg }]}>VISA</Text>
           </View>
         </Animated.View>
@@ -110,15 +118,15 @@ export function VisaCard({
 
           <View style={styles.backInner}>
             <View style={styles.stripe} />
-            <Text style={[styles.fullPan, { color: '#ffffff' }]}>4242 4242 4242 {last4}</Text>
+            <Text style={[styles.fullPan, { color: '#ffffff' }]}>{fullPan}</Text>
             <View style={styles.bottomRow}>
               <View>
                 <Text style={[styles.backLabel, { color: 'rgba(255,255,255,0.7)' }]}>EXP</Text>
-                <Text style={[styles.backValue, { color: '#ffffff' }]}>{EXPIRY}</Text>
+                <Text style={[styles.backValue, { color: '#ffffff' }]}>{expiry ?? '••/••'}</Text>
               </View>
               <View>
                 <Text style={[styles.backLabel, { color: 'rgba(255,255,255,0.7)' }]}>CVC</Text>
-                <Text style={[styles.backValue, { color: '#ffffff' }]}>{CVC}</Text>
+                <Text style={[styles.backValue, { color: '#ffffff' }]}>{cvc ?? '•••'}</Text>
               </View>
               <Text style={[styles.visa, { color: '#ffffff' }]}>VISA</Text>
             </View>

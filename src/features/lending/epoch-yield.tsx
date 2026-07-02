@@ -56,8 +56,7 @@ export function formatCountdown(ms: number): string {
  * The product hook on Home: "Spend yield from your VISA card."
  *
  * Shows a live countdown to the next weekly epoch (Thursday 06:00 UTC) and the
- * $ yield that will be credited to the user's VISA card at that epoch. Uses the
- * demo portfolio so the read-only demo build surfaces real numbers.
+ * $ yield that will be credited to the user's VISA card at that epoch.
  */
 export function EpochYield() {
   const { viewAddress } = useViewAddress();

@@ -8,16 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { env } from '@/lib/env';
 
 /**
  * Login: email-OTP + Google / Apple / wallet (matches the web app).
  *
- * Privy creates an embedded wallet on first login. NOTE: every Privy mobile
- * login method requires native App Attest (iOS) / Play Integrity (Android) and
- * therefore CANNOT complete on the iOS Simulator. For demoing on the simulator,
- * `EXPO_PUBLIC_DEV_LOGIN_BYPASS=true` short-circuits the real flow and enters the
- * app read-only (same as "View demo portfolio"). Set it to false for real builds.
+ * Privy creates an embedded wallet on first login. Works on the iOS Simulator
+ * too — the app's bundle id + URL scheme must be allowlisted on the Privy app
+ * client (dashboard → App clients → Allowed app identifiers / URL schemes).
  */
 export default function LoginScreen() {
   const theme = useTheme();
@@ -31,11 +28,9 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const bypass = env.devLoginBypass;
   const enterApp = () => router.replace('/(tabs)');
 
   async function handleSendCode() {
-    if (bypass) return enterApp();
     setError(null);
     setBusy(true);
     try {
@@ -63,7 +58,6 @@ export default function LoginScreen() {
   }
 
   async function handleOAuth(provider: 'google' | 'apple') {
-    if (bypass) return enterApp();
     setError(null);
     setBusy(true);
     try {
@@ -77,7 +71,6 @@ export default function LoginScreen() {
   }
 
   function handleWallet() {
-    if (bypass) return enterApp();
     // TODO: external wallet (SIWE) connect via useLoginWithSiwe + WalletConnect.
     setError('Connecting an external wallet is coming soon on mobile.');
   }
@@ -114,7 +107,7 @@ export default function LoginScreen() {
                 title="Continue"
                 onPress={handleSendCode}
                 loading={busy}
-                disabled={!bypass && !email.includes('@')}
+                disabled={!email.includes('@')}
               />
 
               <View style={styles.dividerRow}>

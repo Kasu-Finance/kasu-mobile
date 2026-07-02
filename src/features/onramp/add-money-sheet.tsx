@@ -9,20 +9,16 @@ import { UsdcMark } from '@/components/ui/usdc-mark';
 import { useTheme } from '@/hooks/use-theme';
 import { useViewAddress } from '@/lib/web3/use-view-address';
 
-import { DEMO_FUNDING_DETAILS } from './demo-bank';
-import { BottomSheet, ReadOnlyField } from './sheet';
+import { BottomSheet } from './sheet';
 
 /**
  * "Add money" bottom sheet.
  *
  * A single EUR / USD / USDC selector drives the funding method:
- * - **EUR / USD** — a Wayex fiat bank transfer; shows the IBAN / BIC / reference
- *   to wire to (STUBBED with `DEMO_FUNDING_DETAILS` until a Wayex session exists).
- * - **USDC** — not a Wayex rail; just an on-chain (Base) transfer to the user's
- *   own wallet address, with a copy button.
- *
- * TODO: wire Wayex — replace the stub bank details with a real
- * `POST /wayex/deposit-fiat` response once a backend session exists.
+ * - **EUR / USD** — fiat bank transfers; NOT wired yet (needs a Wayex/Bridge
+ *   session — plan W9), so these tabs show a "coming soon" state.
+ * - **USDC** — an on-chain (Base) transfer to the user's own wallet address,
+ *   with a copy button.
  */
 type Method = 'EUR' | 'USD' | 'USDC';
 
@@ -95,16 +91,13 @@ export function AddMoneySheet({
           </ThemedText>
         </View>
       ) : (
-        /* Fiat bank transfer (EUR / USD). */
+        /* Fiat bank transfer (EUR / USD) — pending the fiat on-ramp rail (W9). */
         <View style={styles.section}>
           <ThemedText type="smallBold">Bank transfer</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Send {method} to the account below, including the reference.
+            {method} bank transfers are coming soon. In the meantime you can add
+            money by sending USDC on Base to your wallet address.
           </ThemedText>
-
-          <ReadOnlyField label="IBAN" value={DEMO_FUNDING_DETAILS.iban} />
-          <ReadOnlyField label="BIC" value={DEMO_FUNDING_DETAILS.bic} />
-          <ReadOnlyField label="Reference" value={DEMO_FUNDING_DETAILS.reference} />
         </View>
       )}
     </BottomSheet>

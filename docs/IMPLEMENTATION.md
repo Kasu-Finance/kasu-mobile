@@ -18,17 +18,18 @@ payments, push notifications, Gnosis Pay card.
   (dark-only, brass `#d29e61`, DM Sans + Crimson Text serif headings, gold-bonsai
   VISA card). See "Branding" below.
 
-### Demo mode (important)
-Privy mobile login requires Apple **App Attest** / Play Integrity, which **cannot
-complete on the iOS Simulator** (`invalid_native_app_id`). So:
-- `EXPO_PUBLIC_DEV_LOGIN_BYPASS=true` (set in `.env` + `eas.json` for the demo/
-  preview builds) makes every login button skip Privy and enter the app
-  read-only. **Production builds keep real login** (flag off).
-- `EXPO_PUBLIC_DEMO_PORTFOLIO_ADDRESS=0x4e96…0242` — a real Base lender (~$900k
-  invested). Home/Lend read THIS address's on-chain data so the demo shows real
-  numbers without a logged-in wallet. `useViewAddress()` = `connectedAddress ||
-  demoPortfolioAddress`. No PII is surfaced (KYC etc. key off the connected
-  address, which is null in demo).
+### Demo mode — REMOVED (2026-07-02)
+Demo mode is gone: real Privy login everywhere, real (logged-in) wallet data only.
+- The old claim that login needed App Attest was **wrong** — `invalid_native_app_id`
+  was the Privy app client missing `finance.kasu.mobile` in Allowed app identifiers
+  (dashboard fix, done). Login now works on the iOS Simulator.
+- Removed: `EXPO_PUBLIC_DEV_LOGIN_BYPASS`, `EXPO_PUBLIC_DEMO_PORTFOLIO_ADDRESS`
+  (env + all eas.json profiles), the login bypass branches, `useViewAddress()`'s
+  demo fallback + `isDemo`, `DemoKycGate` (real Compilot `KycGate` gates deposits
+  again), the deposit-flow no-signer review path, the stub Activity feed, the stub
+  bank details (`demo-bank.ts`) — fiat tabs/bank screen now show explicit
+  "coming soon"/empty states pending the W9 rail — and the fixed card PAN/EXP/CVC
+  (VisaCard takes optional real `pan`/`expiry`/`cvc` props, masked when absent).
 
 ## Branding (Kasu brand pass)
 

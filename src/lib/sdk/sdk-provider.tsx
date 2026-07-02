@@ -25,7 +25,7 @@ const SDK_CONFIG_OVERRIDES = {
 /**
  * Builds the `Kasu` facade and exposes it via `useSdk()`. Uses the embedded-
  * wallet signer when available (for deposits/withdrawals); otherwise a read-only
- * RPC provider so strategies + portfolio load before/without login (demo mode).
+ * RPC provider so strategies + pool data load before login.
  */
 export function SdkProvider({
   chainId,

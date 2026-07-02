@@ -7,7 +7,7 @@ import { useSdk } from '@/lib/sdk/use-sdk';
  * Reads a wallet's on-chain Kasu transaction history (deposits, withdrawals,
  * cancellations) via the SDK portfolio facade.
  *
- * Read-only / demo friendly: only the `viewAddress` is required (no signer).
+ * Read-only: only the `viewAddress` is required (no signer needed).
  * The facade may legitimately return an empty array (fresh address) — the
  * Activity screen falls back to a stubbed feed in that case so the tab still
  * looks alive.

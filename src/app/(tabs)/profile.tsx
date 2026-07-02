@@ -18,21 +18,19 @@ import { useViewAddress } from '@/lib/web3/use-view-address';
 /**
  * Profile: identity header, wallet/KYC/chain summary, settings rows, sign out.
  *
- * Read-only / DEMO friendly — there is no logged-in Privy user, so the name and
- * email fall back to stubs and the KYC badge is shown as "Verified" for the
- * demo portfolio. The wallet address comes from `useViewAddress`.
+ * The identity comes from the logged-in Privy user; the wallet address from
+ * `useViewAddress`.
  */
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = usePrivy();
-  const { viewAddress, isDemo } = useViewAddress();
+  const { viewAddress } = useViewAddress();
   const { chainId } = useSdk();
   const chain = getChain(chainId);
 
   const email =
-    user?.linked_accounts?.find((a) => a.type === 'email')?.address ??
-    'kiril@kasu.finance';
-  const name = isDemo || !user ? 'Kiril Ivanov' : email.split('@')[0];
+    user?.linked_accounts?.find((a) => a.type === 'email')?.address ?? '';
+  const name = email ? email.split('@')[0] : 'Kasu member';
   const [avatarFailed, setAvatarFailed] = useState(false);
   const initials = name
     .split(' ')

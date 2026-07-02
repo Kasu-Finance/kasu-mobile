@@ -8,20 +8,18 @@ import { BottomSheet } from '@/features/onramp/sheet';
 import { useViewAddress } from '@/lib/web3/use-view-address';
 
 import { ActivityRow } from './activity-row';
-import { stubActivityItems, toActivityItems, type ActivityItem } from './types';
+import { toActivityItems, type ActivityItem } from './types';
 import { useTransactionHistory } from './use-transaction-history';
 
 /**
  * "Recent activity" feed.
  *
  * Pulls real on-chain history for the view address via the SDK portfolio
- * facade. In DEMO mode — or whenever that history is empty/unavailable — it
- * falls back to a realistic stubbed feed so the tab always looks alive. A small
- * banner makes the stubbed state explicit.
+ * facade. An empty history renders an explicit empty state.
  */
 export default function ActivityScreen() {
   const theme = useTheme();
-  const { viewAddress, isDemo } = useViewAddress();
+  const { viewAddress } = useViewAddress();
   const query = useTransactionHistory(viewAddress);
 
   // The tapped row, surfaced in a bottom sheet. `null` = sheet closed.
@@ -32,8 +30,7 @@ export default function ActivityScreen() {
     [query.data],
   );
 
-  const usingStub = realItems.length === 0;
-  const items = usingStub ? stubActivityItems() : realItems;
+  const items = realItems;
 
   return (
     <View style={styles.container}>
@@ -66,11 +63,9 @@ export default function ActivityScreen() {
         </Card>
       )}
 
-      {usingStub && !query.isLoading ? (
+      {items.length === 0 && !query.isLoading ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
-          {isDemo
-            ? 'Showing sample activity for this demo portfolio.'
-            : 'No on-chain activity yet — showing sample activity.'}
+          No activity yet — top up or lend to get started.
         </ThemedText>
       ) : null}
 

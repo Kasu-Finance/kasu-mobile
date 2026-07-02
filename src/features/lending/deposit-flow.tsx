@@ -22,9 +22,7 @@ import { useViewAddress } from '@/lib/web3/use-view-address';
 import { useStableBalance } from '@/lib/web3/use-balance';
 
 import { parseFormattedMessage } from './lib/contract-types';
-// DEMO: KYC is stubbed out for the read-only demo build (no signer to satisfy
-// the real Nexera flow). Swap back to `@/features/kyc`'s `KycGate` for live use.
-import { DemoKycGate as KycGate } from './lib/demo-kyc-gate';
+import { KycGate } from '@/features/kyc';
 import { DEPOSIT_STEP_LABELS, type DepositStepId, fmt } from './lib/deposit-step-copy';
 import { useDeposit, type DepositPhase } from './use-deposit';
 
@@ -45,17 +43,11 @@ export interface DepositFlowProps {
 export function DepositFlow({ strategy, onClose }: DepositFlowProps) {
   const { chainId } = useSdk();
   const { signer, address } = useEthersSigner();
-  const { isDemo } = useViewAddress();
   const stable = getChain(chainId).stableAsset;
   const balanceQuery = useStableBalance(address, chainId);
 
   const deposit = useDeposit();
   const { state } = deposit;
-
-  // DEMO mode: read-only build with no connected signer. We can't execute the
-  // real deposit tx, so the form's "Continue" leads to a local review +
-  // confirmation step instead of the on-chain orchestrator.
-  const demo = isDemo || !signer;
 
   // Form state — owned here, handed to the orchestrator on Continue.
   const [tranche, setTranche] = useState<StrategyTranche | null>(
@@ -63,8 +55,6 @@ export function DepositFlow({ strategy, onClose }: DepositFlowProps) {
   );
   const [fixedTermConfigId, setFixedTermConfigId] = useState<string>('0');
   const [amount, setAmount] = useState('');
-  // Local step for the demo (no-signer) path: form → review → confirmed.
-  const [demoStep, setDemoStep] = useState<'form' | 'review' | 'confirmed'>('form');
 
   const selectedFixedTerm = tranche?.fixedTermOptions.find(
     (o) => o.configId === fixedTermConfigId,
@@ -77,62 +67,6 @@ export function DepositFlow({ strategy, onClose }: DepositFlowProps) {
   };
 
   const walletBalance = balanceQuery.data ?? '0';
-
-  // ---- Demo (no-signer) path ----
-  if (demo) {
-    if (demoStep === 'confirmed') {
-      return (
-        <DepositConfirmed
-          strategy={strategy}
-          amount={amount}
-          symbol={stable.symbol}
-          onClose={onClose}
-          demo
-        />
-      );
-    }
-    if (demoStep === 'review' && tranche) {
-      return (
-        <DepositReview
-          strategy={strategy}
-          tranche={tranche}
-          amount={amount}
-          symbol={stable.symbol}
-          fixedTermLabel={
-            selectedFixedTerm
-              ? `${selectedFixedTerm.epochLockDuration}w · ${formatApy(selectedFixedTerm.apy)}`
-              : 'Flexible'
-          }
-          apy={selectedFixedTerm ? selectedFixedTerm.apy : tranche.apy}
-          onConfirm={() => setDemoStep('confirmed')}
-          onBack={() => setDemoStep('form')}
-        />
-      );
-    }
-    return (
-      <KycGate>
-        <DepositForm
-          strategy={strategy}
-          tranche={tranche}
-          onSelectTranche={onSelectTranche}
-          fixedTermConfigId={fixedTermConfigId}
-          onSelectFixedTerm={setFixedTermConfigId}
-          amount={amount}
-          onChangeAmount={setAmount}
-          walletBalance={walletBalance}
-          balanceLoading={balanceQuery.isLoading}
-          skipBalanceCheck
-          errorMessage={null}
-          submitLabel="Review deposit"
-          onSubmit={() => {
-            if (!tranche) return;
-            setDemoStep('review');
-          }}
-          onCancel={onClose}
-        />
-      </KycGate>
-    );
-  }
 
   // ---- Render by phase ----
   if (state.phase === 'success') {
@@ -223,7 +157,7 @@ function DepositForm({
   onChangeAmount: (v: string) => void;
   walletBalance: string;
   balanceLoading: boolean;
-  /** DEMO: skip the wallet-balance ceiling (no connected signer to fund). */
+  /** Skip the wallet-balance ceiling (kept for flows without a funded wallet). */
   skipBalanceCheck?: boolean;
   errorMessage: string | null;
   submitLabel?: string;
@@ -501,50 +435,6 @@ function ProgressStep({
 }
 
 // ---------------------------------------------------------------------------
-// Review (demo / no-signer path)
-// ---------------------------------------------------------------------------
-
-function DepositReview({
-  strategy,
-  tranche,
-  amount,
-  symbol,
-  fixedTermLabel,
-  apy,
-  onConfirm,
-  onBack,
-}: {
-  strategy: Strategy;
-  tranche: StrategyTranche;
-  amount: string;
-  symbol: string;
-  fixedTermLabel: string;
-  apy: number;
-  onConfirm: () => void;
-  onBack: () => void;
-}) {
-  return (
-    <View style={styles.gap}>
-      <ThemedText type="smallBold">Review your deposit</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        Confirm the details below. This is a read-only demo — no transaction is
-        submitted and no funds move.
-      </ThemedText>
-      <Card style={styles.gapSmall}>
-        <Row label="Strategy" value={strategy.name} />
-        <Row label="Tranche" value={tranche.name} />
-        <Row label="Term" value={fixedTermLabel} />
-        <Row label="APY" value={formatApy(apy)} />
-        <Row label="Amount" value={`${amount || '0'} ${symbol}`} />
-        <Row label="Settlement" value="Next weekly epoch" />
-      </Card>
-      <Button title="Confirm deposit" onPress={onConfirm} />
-      <Button title="Back" variant="ghost" onPress={onBack} />
-    </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Confirmed
 // ---------------------------------------------------------------------------
 
@@ -553,27 +443,20 @@ function DepositConfirmed({
   amount,
   symbol,
   onClose,
-  demo = false,
 }: {
   strategy: Strategy;
   amount: string;
   symbol: string;
   onClose: () => void;
-  /** DEMO: nothing was actually submitted — soften the copy accordingly. */
-  demo?: boolean;
 }) {
   return (
     <View style={styles.gap}>
-      <ThemedText type="smallBold">
-        {demo ? 'Deposit reviewed' : 'Deposit confirmed'}
-      </ThemedText>
+      <ThemedText type="smallBold">Deposit confirmed</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        {demo
-          ? `In a live build your deposit of ${amount || '0'} ${symbol} into ${strategy.name} would be submitted and activate at the next weekly settlement period (epoch). No transaction was sent in this demo.`
-          : `Your deposit of ${amount} ${symbol} into ${strategy.name} has been submitted. Your position activates at the next weekly settlement period (epoch).`}
+        {`Your deposit of ${amount} ${symbol} into ${strategy.name} has been submitted. Your position activates at the next weekly settlement period (epoch).`}
       </ThemedText>
       <Card style={styles.gapSmall}>
-        <Row label="Status" value={demo ? 'Demo (no transaction)' : 'Submitted'} />
+        <Row label="Status" value="Submitted" />
         <Row label="Settlement" value="Next weekly epoch" />
       </Card>
       <Button title="Back to strategy" onPress={onClose} />

@@ -8,9 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useSdk } from '@/lib/sdk/use-sdk';
 import { getChain } from '@/lib/web3/chains';
 
-// DEMO: KYC is stubbed out for the read-only demo build. Swap back to
-// `@/features/kyc`'s `KycGate` for live use.
-import { DemoKycGate as KycGate } from './lib/demo-kyc-gate';
+import { KycGate } from '@/features/kyc';
 import { useWithdraw } from './use-withdraw';
 
 export interface WithdrawProps {

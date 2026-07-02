@@ -30,11 +30,9 @@ export function Portfolio({ onWithdraw, summaryOnly = false }: PortfolioProps) {
   const theme = useTheme();
   const { chainId } = useSdk();
   const stable = getChain(chainId).stableAsset;
-  const { viewAddress, isDemo } = useViewAddress();
+  const { viewAddress } = useViewAddress();
   const { data, isLoading, isError } = usePortfolio(viewAddress);
-  // Read-only when viewing a demo address — the connected signer can't withdraw
-  // someone else's position, so don't offer the action.
-  const effectiveOnWithdraw = isDemo ? undefined : onWithdraw;
+  const effectiveOnWithdraw = onWithdraw;
 
   if (isLoading) {
     return (
