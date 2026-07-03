@@ -45,7 +45,7 @@ export default function ProfileScreen() {
     } catch {
       // Ignore — we sign out of the UI regardless.
     }
-    router.replace('/(auth)/login');
+    router.replace('/(auth)/welcome');
   }
 
   return (
