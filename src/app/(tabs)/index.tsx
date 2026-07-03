@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
+import { ActivityScreen } from '@/features/activity';
 import { Screen } from '@/components/ui/screen';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { VisaCard } from '@/components/ui/visa-card';
@@ -47,18 +49,29 @@ export default function HomeScreen() {
 
       <VisaCard balance={balanceText} />
 
-      {/* The product hook: yield from lending tops up the VISA card. */}
-      <EpochYield />
-
-      <View style={styles.actions}>
-        <ActionButton label="Add funds" glyph="＋" onPress={() => setSheet('add')} />
-        <ActionButton label="Withdraw" glyph="↓" onPress={() => setSheet('withdraw')} />
-        <ActionButton label="Activity" glyph="≡" onPress={() => router.push('/activity')} />
-        <ActionButton label="Send" glyph="↗" onPress={() => setSheet('send')} />
+      {/* Plasma One order: balance under the card, then the primary CTA. */}
+      <View style={styles.balanceBlock}>
+        <ThemedText type="small" themeColor="textSecondary">
+          BALANCE
+        </ThemedText>
+        <ThemedText type="title">{balanceText}</ThemedText>
       </View>
 
-      {/* The crucial content: the lending portfolio now lives on Home. */}
-      <Portfolio />
+      <Button title="Add money" onPress={() => setSheet('add')} />
+
+      <View style={styles.actions}>
+        <ActionButton label="Withdraw" glyph="↓" onPress={() => setSheet('withdraw')} />
+        <ActionButton label="Send" glyph="↗" onPress={() => setSheet('send')} />
+        <ActionButton label="Activity" glyph="≡" onPress={() => router.push('/activity')} />
+      </View>
+
+      {/* The product hook: interest tops up the card every Thursday. */}
+      <EpochYield />
+
+      <Portfolio summaryOnly />
+
+      {/* Recent activity feed, Plasma-style, right on Home. */}
+      <ActivityScreen />
 
       <AddMoneySheet visible={sheet === 'add'} onClose={() => setSheet(null)} />
       <WithdrawSheet visible={sheet === 'withdraw'} onClose={() => setSheet(null)} />
@@ -94,6 +107,7 @@ function ActionButton({
 }
 
 const styles = StyleSheet.create({
+  balanceBlock: { gap: 2 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   avatar: {
     width: 36,
