@@ -81,11 +81,6 @@ export default function LoginScreen() {
     }
   }
 
-  function handleWallet() {
-    // TODO: external wallet (SIWE) connect via useLoginWithSiwe + WalletConnect.
-    setError('Connecting an external wallet is coming soon on mobile.');
-  }
-
   const inputStyle = [
     styles.input,
     { color: theme.text, backgroundColor: theme.backgroundElement },
@@ -131,7 +126,6 @@ export default function LoginScreen() {
 
               <Button title="Continue with Google" variant="secondary" onPress={() => handleOAuth('google')} />
               <Button title="Continue with Apple" variant="secondary" onPress={() => handleOAuth('apple')} />
-              <Button title="Connect wallet" variant="secondary" onPress={handleWallet} />
             </>
           ) : (
             <>
