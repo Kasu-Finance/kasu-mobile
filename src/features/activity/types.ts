@@ -3,7 +3,12 @@ import type { UserRequest, UserRequestEvent } from '@kasufinance/kasu-sdk';
 import { formatUsd } from '@/lib/format';
 
 /** Visual category for an activity row — drives glyph + dot colour. */
-export type ActivityKind = 'deposit' | 'yield' | 'withdrawal' | 'cancellation';
+export type ActivityKind =
+  | 'deposit'
+  | 'yield'
+  | 'withdrawal'
+  | 'cancellation'
+  | 'spend';
 
 /** A single labelled fact shown in the expanded detail of a row. */
 export interface ActivityDetail {
@@ -166,4 +171,43 @@ export function toActivityItems(requests: UserRequest[]): ActivityItem[] {
         details: toDetails(req),
       };
     });
+}
+
+/** Shape of a card transaction from `GET /mobile/card/transactions`. */
+export interface CardTransactionInput {
+  id: string;
+  status?: string;
+  type?: string;
+  amount?: string;
+  currency?: string;
+  merchantName?: string;
+  createdAt?: string;
+}
+
+/** Map a card transaction into a feed row (a card purchase = an outflow). */
+export function cardTransactionToActivityItem(t: CardTransactionInput): ActivityItem {
+  const amountNum = Number(t.amount ?? '0');
+  const ts = t.createdAt ? Math.floor(new Date(t.createdAt).getTime() / 1000) : 0;
+  const merchant = t.merchantName || 'Card purchase';
+  const status =
+    t.status === 'cleared'
+      ? 'Completed'
+      : t.status === 'holding'
+        ? 'Pending'
+        : t.status ?? 'Completed';
+  return {
+    id: `card-${t.id}`,
+    kind: 'spend',
+    title: merchant,
+    subtitle: 'Card',
+    timestamp: ts,
+    amount: `-${formatUsd(amountNum)}`,
+    positive: false,
+    status,
+    details: [
+      { label: 'Merchant', value: merchant },
+      { label: 'Amount', value: formatUsd(amountNum) },
+      { label: 'Status', value: status },
+    ],
+  };
 }

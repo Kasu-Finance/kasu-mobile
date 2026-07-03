@@ -7,37 +7,44 @@ import { useTheme } from '@/hooks/use-theme';
 import { BottomSheet } from '@/features/onramp/sheet';
 import { useViewAddress } from '@/lib/web3/use-view-address';
 
+import { useCardTransactions } from '@/features/card/use-card-transactions';
+
 import { ActivityRow } from './activity-row';
-import { toActivityItems, type ActivityItem } from './types';
+import {
+  cardTransactionToActivityItem,
+  toActivityItems,
+  type ActivityItem,
+} from './types';
 import { useTransactionHistory } from './use-transaction-history';
 
 /**
  * "Recent activity" feed.
  *
- * Pulls real on-chain history for the view address via the SDK portfolio
- * facade. An empty history renders an explicit empty state.
+ * Merges on-chain Kasu history (deposits, yield, withdrawals — via the SDK
+ * portfolio facade) with card purchases (via `/mobile/card/transactions`),
+ * newest first. An empty feed renders an explicit empty state.
  */
 export default function ActivityScreen() {
   const theme = useTheme();
   const { viewAddress } = useViewAddress();
   const query = useTransactionHistory(viewAddress);
+  const cardQuery = useCardTransactions(viewAddress);
 
   // The tapped row, surfaced in a bottom sheet. `null` = sheet closed.
   const [selected, setSelected] = useState<ActivityItem | null>(null);
 
-  const realItems = useMemo<ActivityItem[]>(
-    () => (query.data ? toActivityItems(query.data) : []),
-    [query.data],
-  );
-
-  const items = realItems;
+  const items = useMemo<ActivityItem[]>(() => {
+    const lending = query.data ? toActivityItems(query.data) : [];
+    const card = (cardQuery.data ?? []).map(cardTransactionToActivityItem);
+    return [...lending, ...card].sort((a, b) => b.timestamp - a.timestamp);
+  }, [query.data, cardQuery.data]);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <ThemedText type="subtitle">Recent activity</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Deposits, yield and withdrawals across your Kasu strategies.
+          Your card purchases, deposits and weekly interest.
         </ThemedText>
       </View>
 

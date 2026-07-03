@@ -14,6 +14,7 @@ const KIND_META: Record<ActivityKind, { color: string; glyph: string }> = {
   yield: { color: '#d29e61', glyph: '✦' },
   withdrawal: { color: '#7d7d83', glyph: '↑' },
   cancellation: { color: '#7d7d83', glyph: '×' },
+  spend: { color: '#7d7d83', glyph: '⌁' },
 };
 
 /**
