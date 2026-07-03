@@ -20,6 +20,8 @@ import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 import { useCardOnboard } from './use-card-onboard';
 import { useCardPanReveal, type RevealedCard } from './use-card-pan';
 import { useCardStatus } from './use-card-status';
+import { useCardTransactions } from './use-card-transactions';
+import { useSeedDemoSpend, useSimulatePurchase } from './use-card-demo';
 import { useEnsureCardSession } from './use-card-session';
 import { haptics } from '@/lib/haptics';
 import { useCardTopup } from './use-card-topup';
@@ -340,6 +342,8 @@ function ActiveState({
 }) {
   const topup = useCardTopup();
   const reveal = useCardPanReveal();
+  const simulate = useSimulatePurchase();
+  const cardTx = useCardTransactions(address);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ txHash: string | null; accepted: boolean } | null>(
@@ -347,6 +351,9 @@ function ActiveState({
   );
   const [revealed, setRevealed] = useState<RevealedCard | null>(null);
   const theme = useTheme();
+
+  // Sandbox: seed a few realistic purchases the first time the card is live.
+  useSeedDemoSpend(address, true, cardTx.data?.length ?? 0, cardTx.isLoading);
 
   const trimmed = amount.trim();
   const amountValid = Number(trimmed) > 0;
@@ -431,6 +438,13 @@ function ActiveState({
           onPress={handleTopup}
         />
       </Card>
+
+      <Button
+        title="Add a sample purchase"
+        variant="ghost"
+        loading={simulate.isPending}
+        onPress={() => simulate.mutate(address)}
+      />
     </View>
   );
 }
