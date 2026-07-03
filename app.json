@@ -10,7 +10,8 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "finance.kasu.mobile"
+      "bundleIdentifier": "finance.kasu.mobile",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "finance.kasu.mobile",
@@ -38,7 +39,8 @@
         }
       ],
       "expo-secure-store",
-      "expo-image"
+      "expo-image",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true,
