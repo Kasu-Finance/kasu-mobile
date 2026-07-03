@@ -1,3 +1,4 @@
+import { usePrivy } from '@privy-io/expo';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,28 +17,34 @@ import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 
 import { useCardOnboard } from './use-card-onboard';
 import { useCardStatus } from './use-card-status';
+import { useEnsureCardSession } from './use-card-session';
 import { haptics } from '@/lib/haptics';
 import { useCardTopup } from './use-card-topup';
-import { type CardStatus } from './types';
+import { type CardBackendStatus, type CardStatus } from './types';
 
 const ERROR_COLOR = '#e4645a';
 
 /**
- * Gnosis Pay card (F6). Renders by status:
- *   - `none`     -> onboarding CTA (POST /mobile/card/onboard + hosted flow),
- *   - `pending`  -> "in review" notice with refresh,
- *   - `active`   -> minimal card visual (last4 + KASU) and a top-up flow,
- *   - `frozen`   -> frozen notice,
- *   - `rejected` -> declined notice with retry onboarding.
+ * Kasu card (F6). Renders by the backend onboarding state machine:
+ *   - session-required -> silently establishing (embedded wallet signs), shows
+ *     a brief "preparing" state — never a visible wallet step,
+ *   - kyc-required     -> identity-verification CTA (framed as card partner),
+ *   - kyc-pending      -> "verification in progress",
+ *   - ready            -> finish setup (create the card),
+ *   - active           -> minimal card visual + top-up,
+ *   - (rejected mapped to a declined state).
  *
- * Mounted into the Card tab alongside the on-ramp "Add funds" flow during
- * integration. Errors from the (parallel) backend degrade to `none` inside
- * `useCardStatus`, so this screen never lands in a hard error state.
+ * Errors from the backend degrade to `none` inside `useCardStatus`, so this
+ * screen never lands in a hard error state.
  */
 export default function CardScreen() {
   const theme = useTheme();
   const { address } = useEthersSigner();
-  const { status, last4, isLoading, isFetching, refetch } = useCardStatus(address);
+  const { status, backendStatus, last4, kycUrl, isLoading, isFetching, refetch } =
+    useCardStatus(address);
+
+  // Establish the card session invisibly the moment the wallet is ready.
+  useEnsureCardSession(address, backendStatus);
 
   // Celebrate the card going live — only on a transition observed while
   // mounted, not when the screen opens with an already-active card.
@@ -70,45 +77,117 @@ export default function CardScreen() {
 
   return (
     <View style={styles.gap}>
-      {status === 'none' && <OnboardingCta address={address} />}
-      {status === 'rejected' && <RejectedState address={address} />}
-      {status === 'pending' && (
-        <PendingState refetch={refetch} refreshing={isFetching} />
-      )}
-      {status === 'frozen' && (
+      {status === 'active' ? (
+        <ActiveState address={address} last4={last4} />
+      ) : status === 'rejected' ? (
+        <RejectedState address={address} />
+      ) : status === 'frozen' ? (
         <FrozenState last4={last4} refetch={refetch} refreshing={isFetching} />
+      ) : (
+        <OnboardingCard
+          address={address}
+          backendStatus={backendStatus}
+          kycUrl={kycUrl}
+          refetch={refetch}
+          refreshing={isFetching}
+        />
       )}
-      {status === 'active' && <ActiveState address={address} last4={last4} />}
     </View>
   );
 }
 
-/** `none` — never started: pitch + start onboarding. */
-function OnboardingCta({ address }: { address: string }) {
+/**
+ * The onboarding sub-flow, keyed off the backend state machine. The wallet /
+ * session step is invisible (handled by `useEnsureCardSession`), so the user
+ * only ever sees: preparing -> verify identity -> in review -> finish.
+ */
+function OnboardingCard({
+  address,
+  backendStatus,
+  kycUrl,
+  refetch,
+  refreshing,
+}: {
+  address: string;
+  backendStatus: CardBackendStatus;
+  kycUrl: string | null;
+  refetch: () => void;
+  refreshing: boolean;
+}) {
   const onboard = useCardOnboard();
   const [error, setError] = useState<string | null>(null);
 
-  const handleStart = async () => {
+  const run = async (input: {
+    userAddress: string;
+    email?: string;
+    phone?: string;
+  }) => {
     setError(null);
     try {
-      await onboard.openOnboarding({ userAddress: address });
+      await onboard.advanceOnboarding(input);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error.');
     }
   };
 
+  // session-required (session still establishing) or none (first read).
+  if (backendStatus === 'session-required' || backendStatus === 'none') {
+    return (
+      <Card style={styles.gap}>
+        <ThemedText type="smallBold">Get the Kasu card</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Spend your balance anywhere Mastercard is accepted — with cashback on
+          every purchase. Setting things up…
+        </ThemedText>
+        <View style={styles.inlineLoading}>
+          <ActivityIndicator />
+        </View>
+      </Card>
+    );
+  }
+
+  if (backendStatus === 'kyc-required') {
+    return (
+      <VerifyIdentityCard
+        address={address}
+        hasKycUrl={Boolean(kycUrl)}
+        pending={onboard.isPending}
+        error={error}
+        onSubmit={(email, phone) => run({ userAddress: address, email, phone })}
+      />
+    );
+  }
+
+  if (backendStatus === 'kyc-pending' || backendStatus === 'blocked') {
+    return (
+      <Card style={styles.gap}>
+        <ThemedText type="smallBold">Verification in progress</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          We&apos;re confirming your details. This usually completes within a few
+          minutes.
+        </ThemedText>
+        <Button
+          title="Refresh"
+          variant="ghost"
+          loading={refreshing}
+          onPress={refetch}
+        />
+      </Card>
+    );
+  }
+
+  // ready — finish setup by creating the card.
   return (
     <Card style={styles.gap}>
-      <ThemedText type="smallBold">Get the Kasu card</ThemedText>
+      <ThemedText type="smallBold">You&apos;re all set</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Spend your balance anywhere Mastercard is accepted. A quick
-        one-time setup opens in your browser.
+        Create your card to start spending.
       </ThemedText>
       {error && <ErrorText message={error} />}
       <Button
-        title="Set up card"
+        title="Create my card"
         loading={onboard.isPending}
-        onPress={handleStart}
+        onPress={() => run({ userAddress: address })}
       />
     </Card>
   );
@@ -145,26 +224,61 @@ function RejectedState({ address }: { address: string }) {
   );
 }
 
-/** `pending` — onboarding in review. */
-function PendingState({
-  refetch,
-  refreshing,
+/**
+ * Identity verification (backend `kyc-required`). Collects a phone number and
+ * pulls the email from the signed-in account, submits them as the KYC contact
+ * prerequisites, then hands off to the card partner's hosted check. Framed as a
+ * bank's "confirm your details", never as crypto KYC.
+ */
+function VerifyIdentityCard({
+  address,
+  hasKycUrl,
+  pending,
+  error,
+  onSubmit,
 }: {
-  refetch: () => void;
-  refreshing: boolean;
+  address: string;
+  hasKycUrl: boolean;
+  pending: boolean;
+  error: string | null;
+  onSubmit: (email: string | undefined, phone: string | undefined) => void;
 }) {
+  const theme = useTheme();
+  const { user } = usePrivy();
+  const emailAccount = user?.linked_accounts?.find((a) => a.type === 'email');
+  const email =
+    emailAccount && 'address' in emailAccount ? emailAccount.address : undefined;
+  const [phone, setPhone] = useState('');
+  void address;
+
+  const phoneValid = /^\+?[0-9 ]{7,}$/.test(phone.trim());
+
   return (
     <Card style={styles.gap}>
-      <ThemedText type="smallBold">Card application in review</ThemedText>
+      <ThemedText type="smallBold">Verify your identity</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        We&apos;re finishing your card setup. This usually completes shortly —
-        check back in a little while.
+        One quick check with our card partner and your card is ready. It takes a
+        couple of minutes.
       </ThemedText>
+      <TextInput
+        value={phone}
+        onChangeText={setPhone}
+        placeholder="Mobile number"
+        placeholderTextColor={theme.textSecondary}
+        keyboardType="phone-pad"
+        inputMode="tel"
+        autoComplete="tel"
+        style={[
+          styles.input,
+          { backgroundColor: theme.backgroundElement, color: theme.text },
+        ]}
+      />
+      {error && <ErrorText message={error} />}
       <Button
-        title="Refresh status"
-        variant="ghost"
-        loading={refreshing}
-        onPress={refetch}
+        title={hasKycUrl ? 'Verify identity' : 'Continue'}
+        loading={pending}
+        disabled={!phoneValid}
+        onPress={() => onSubmit(email, phone.trim())}
       />
     </Card>
   );
@@ -319,6 +433,7 @@ function ErrorText({ message }: { message: string }) {
 const styles = StyleSheet.create({
   gap: { gap: 12 },
   center: { alignItems: 'center', justifyContent: 'center', minHeight: 80 },
+  inlineLoading: { paddingVertical: 8, alignItems: 'flex-start' },
   error: { color: ERROR_COLOR },
   input: {
     height: 52,
