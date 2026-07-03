@@ -11,7 +11,10 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "finance.kasu.mobile",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "finance.kasu.mobile",

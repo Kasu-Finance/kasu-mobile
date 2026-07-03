@@ -99,6 +99,18 @@ export default function LoginScreen() {
         <View style={styles.form}>
           {step === 'email' ? (
             <>
+              {/* Plasma One order: socials first (Apple most prominent), email below. */}
+              <Button title="Continue with Apple" onPress={() => handleOAuth('apple')} />
+              <Button title="Continue with Google" variant="secondary" onPress={() => handleOAuth('google')} />
+
+              <View style={styles.dividerRow}>
+                <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />
+                <ThemedText type="small" themeColor="textSecondary">
+                  or
+                </ThemedText>
+                <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />
+              </View>
+
               <TextInput
                 style={inputStyle}
                 placeholder="you@email.com"
@@ -110,22 +122,12 @@ export default function LoginScreen() {
                 onChangeText={setEmail}
               />
               <Button
-                title="Continue"
+                title="Continue with email"
+                variant="secondary"
                 onPress={handleSendCode}
                 loading={busy}
                 disabled={!email.includes('@')}
               />
-
-              <View style={styles.dividerRow}>
-                <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />
-                <ThemedText type="small" themeColor="textSecondary">
-                  or
-                </ThemedText>
-                <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />
-              </View>
-
-              <Button title="Continue with Google" variant="secondary" onPress={() => handleOAuth('google')} />
-              <Button title="Continue with Apple" variant="secondary" onPress={() => handleOAuth('apple')} />
             </>
           ) : (
             <>

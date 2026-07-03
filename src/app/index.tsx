@@ -23,5 +23,5 @@ function AuthedEntry() {
       </View>
     );
   }
-  return <Redirect href={user ? '/(tabs)' : '/(auth)/login'} />;
+  return <Redirect href={user ? '/(tabs)' : '/(auth)/welcome'} />;
 }
