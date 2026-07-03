@@ -48,7 +48,7 @@ export function AddFunds() {
       <Card style={styles.gap}>
         <ThemedText type="smallBold">Add funds</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Wire USD and we&apos;ll convert it to USDC on Base, straight to your
+          Wire USD and it lands in your balance, straight to your
           wallet. Start by opening a secure session.
         </ThemedText>
         {sessionError && (
@@ -114,7 +114,7 @@ function AddFundsBody({
         <ThemedText type="smallBold">Add funds</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           Generate bank wire instructions. Send the wire from your bank and
-          we&apos;ll credit USDC to your wallet — usually within 1–2 hours of
+          we&apos;ll credit your balance — usually within 1–2 hours of
           your bank releasing the funds.
         </ThemedText>
         {error && (

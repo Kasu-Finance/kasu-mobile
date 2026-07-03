@@ -39,7 +39,7 @@ export default function MyBankRoute() {
           <ThemedText type="smallBold">No linked bank account yet</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             Linking a bank account for fiat deposits and withdrawals is coming
-            soon. You can add money now by sending USDC on Base to your wallet.
+            soon. You can add money now with a direct transfer from the Add money screen.
           </ThemedText>
         </Card>
       </View>

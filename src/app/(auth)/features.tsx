@@ -26,8 +26,8 @@ const SLIDES = [
     sf: 'chart.line.uptrend.xyaxis' as const,
     title: 'Earn like a lender',
     body:
-      'Your USDC works in Kasu’s private-credit strategies — real yield ' +
-      'from real businesses, not token emissions.',
+      'Your dollars work in Kasu’s private-credit strategies — real yield ' +
+      'from real businesses, paid every week.',
   },
   {
     sf: 'creditcard' as const,
@@ -40,8 +40,8 @@ const SLIDES = [
     sf: 'lock.shield' as const,
     title: 'Your money, your keys',
     body:
-      'A self-custodial wallet under the hood — no seed phrases, instant ' +
-      'transfers, and on/off-ramps built in.',
+      'Your money stays yours — held in your own secure account, with ' +
+      'instant transfers in and out whenever you want.',
   },
 ];
 

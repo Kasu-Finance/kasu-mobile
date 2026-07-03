@@ -84,7 +84,7 @@ export function OffRamp() {
       <Card style={styles.gap}>
         <ThemedText type="smallBold">Withdraw to bank</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Convert USDC back to USD and send it to your bank. Start by opening a
+          Move your balance to your bank account. Start by opening a
           secure session.
         </ThemedText>
         {sessionError && (
@@ -149,9 +149,9 @@ function OffRampBody({ enabled }: { enabled: boolean }) {
   if (depositAddress) {
     return (
       <View style={styles.gap}>
-        <ThemedText type="smallBold">Send USDC to withdraw</ThemedText>
+        <ThemedText type="smallBold">Transfer to withdraw</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Send USDC to the address below. We&apos;ll convert it to USD and pay
+          Transfer to the account below. We&apos;ll convert it and pay
           out to {selected?.nickname ?? 'your bank account'}.
         </ThemedText>
         <Card>

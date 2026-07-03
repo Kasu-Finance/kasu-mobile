@@ -54,7 +54,7 @@ export default function CardScreen() {
       <Card style={styles.gap}>
         <ThemedText type="smallBold">Kasu card</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Connect a wallet to set up your Gnosis Pay card.
+          Sign in to set up your Kasu card.
         </ThemedText>
       </Card>
     );
@@ -101,7 +101,7 @@ function OnboardingCta({ address }: { address: string }) {
     <Card style={styles.gap}>
       <ThemedText type="smallBold">Get the Kasu card</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Spend your stablecoin balance anywhere with a Gnosis Pay card. A quick
+        Spend your balance anywhere Mastercard is accepted. A quick
         one-time setup opens in your browser.
       </ThemedText>
       {error && <ErrorText message={error} />}
@@ -187,7 +187,7 @@ function FrozenState({
         <ThemedText type="smallBold">Card frozen</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           Your card is currently frozen and can&apos;t be used for payments.
-          Manage your card in the Gnosis Pay app to unfreeze it.
+          Contact support to unfreeze it.
         </ThemedText>
         <Button
           title="Refresh status"
@@ -245,7 +245,7 @@ function ActiveState({
       <Card style={styles.gap}>
         <ThemedText type="smallBold">Top up</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Move funds from your wallet onto your card.
+          Move money from your balance onto your card.
         </ThemedText>
         <TextInput
           value={amount}
@@ -301,7 +301,7 @@ function CardVisual({
           •••• {last4 ?? '••••'}
         </ThemedText>
         <ThemedText type="small" style={styles.cardMeta}>
-          {status === 'frozen' ? 'Frozen' : 'Gnosis Pay'}
+          {status === 'frozen' ? 'Frozen' : 'Kasu'}
         </ThemedText>
       </View>
     </View>

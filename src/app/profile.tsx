@@ -11,8 +11,6 @@ import { Screen } from '@/components/ui/screen';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { useTheme } from '@/hooks/use-theme';
 import { shortAddress } from '@/lib/format';
-import { useSdk } from '@/lib/sdk/use-sdk';
-import { getChain } from '@/lib/web3/chains';
 import { useViewAddress } from '@/lib/web3/use-view-address';
 
 /**
@@ -25,8 +23,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = usePrivy();
   const { viewAddress } = useViewAddress();
-  const { chainId } = useSdk();
-  const chain = getChain(chainId);
 
   const email =
     user?.linked_accounts?.find((a) => a.type === 'email')?.address ?? '';
@@ -78,7 +74,7 @@ export default function ProfileScreen() {
       {/* Account summary */}
       <Card style={styles.summaryCard}>
         <SummaryRow
-          label="Wallet"
+          label="Account"
           value={viewAddress ? shortAddress(viewAddress, 8, 6) : '—'}
         />
         <Divider />
@@ -87,7 +83,6 @@ export default function ProfileScreen() {
           value={<VerifiedBadge />}
         />
         <Divider />
-        <SummaryRow label="Network" value={chain.name} />
       </Card>
 
       {/* Settings */}

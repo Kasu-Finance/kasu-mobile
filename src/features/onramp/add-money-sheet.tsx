@@ -21,12 +21,12 @@ import { BottomSheet } from './sheet';
  * - **USDC** — an on-chain (Base) transfer to the user's own wallet address,
  *   with a copy button.
  */
-type Method = 'EUR' | 'USD' | 'USDC';
+type Method = 'EUR' | 'USD' | 'DIRECT';
 
 const METHOD_OPTIONS: { key: Method; label: string; icon: ReactNode }[] = [
   { key: 'EUR', label: 'EUR', icon: <Text style={{ fontSize: 15 }}>🇪🇺</Text> },
   { key: 'USD', label: 'USD', icon: <Text style={{ fontSize: 15 }}>🇺🇸</Text> },
-  { key: 'USDC', label: 'USDC', icon: <UsdcMark size={16} /> },
+  { key: 'DIRECT', label: 'Direct', icon: <UsdcMark size={16} /> },
 ];
 
 export function AddMoneySheet({
@@ -49,7 +49,7 @@ export function AddMoneySheet({
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const isUsdc = method === 'USDC';
+  const isDirect = method === 'DIRECT';
 
   return (
     <BottomSheet visible={visible} title="Add money" onClose={onClose}>
@@ -59,12 +59,12 @@ export function AddMoneySheet({
         onChange={(k) => setMethod(k as Method)}
       />
 
-      {isUsdc ? (
-        /* On-chain (Base) — send USDC to your own wallet address. */
+      {isDirect ? (
+        /* Direct transfer — instant deposit to the user's account number. */
         <View style={styles.section}>
-          <ThemedText type="smallBold">USDC on Base</ThemedText>
+          <ThemedText type="smallBold">Direct transfer</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Send USDC on the Base network to your wallet address below.
+            Receive an instant transfer from another account or platform using your account number below.
           </ThemedText>
 
           <View
@@ -73,23 +73,23 @@ export function AddMoneySheet({
               { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected },
             ]}>
             <ThemedText type="small" selectable style={styles.address}>
-              {viewAddress ?? 'No wallet connected'}
+              {viewAddress ?? 'Sign in to see your account number'}
             </ThemedText>
           </View>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Copy wallet address"
+            accessibilityLabel="Copy account number"
             disabled={!viewAddress}
             onPress={onCopy}
             style={[styles.copyBtn, { backgroundColor: ACCENT, opacity: viewAddress ? 1 : 0.5 }]}>
             <Text style={[styles.copyText, { color: theme.onAccent }]}>
-              {copied ? 'Copied!' : 'Copy address'}
+              {copied ? 'Copied!' : 'Copy account number'}
             </Text>
           </Pressable>
 
           <ThemedText type="small" themeColor="textSecondary">
-            Only send USDC on Base. Other networks or assets may be lost.
+            Only digital-dollar transfers are supported. Ask the sender to double-check the account number.
           </ThemedText>
         </View>
       ) : (
@@ -98,7 +98,7 @@ export function AddMoneySheet({
           <ThemedText type="smallBold">Bank transfer</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {method} bank transfers are coming soon. In the meantime you can add
-            money by sending USDC on Base to your wallet address.
+            money with a direct transfer using your account number.
           </ThemedText>
         </View>
       )}

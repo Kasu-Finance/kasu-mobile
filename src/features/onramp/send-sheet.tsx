@@ -42,7 +42,7 @@ export function SendSheet({
 
       <View style={styles.field}>
         <ThemedText type="small" themeColor="textSecondary">
-          Amount (USDC)
+          Amount ($)
         </ThemedText>
         <TextInput
           value={amount}

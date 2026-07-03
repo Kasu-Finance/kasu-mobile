@@ -362,7 +362,7 @@ function LoanContractStep({
           <ThemedText type="small">{message || (tree ? '[structured contract loaded]' : '')}</ThemedText>
         </ScrollView>
       </Card>
-      <Button title={signing ? 'Sign in wallet…' : 'Accept & sign'} loading={signing} onPress={onAccept} />
+      <Button title={signing ? 'Confirming…' : 'Accept & continue'} loading={signing} onPress={onAccept} />
       <Button title="Go back" variant="ghost" disabled={signing} onPress={onDecline} />
     </View>
   );
@@ -379,7 +379,7 @@ const PROGRESS_COPY: Record<
   'generating-sign': {
     step: 'generate',
     title: 'Generating loan contract',
-    sub: 'Sign in your wallet to authorize the request.',
+    sub: 'Authorizing your deposit…',
   },
   'generating-fetch': {
     step: 'generate',
@@ -389,16 +389,16 @@ const PROGRESS_COPY: Record<
   approve: {
     step: 'approve',
     title: 'Approving {stableAsset}',
-    sub: 'Confirm the approval in your wallet.',
+    sub: 'Approving the transfer…',
   },
   'request-sign': {
     step: 'request',
     title: 'Submitting deposit',
-    sub: 'Confirm the deposit transaction in your wallet.',
+    sub: 'Submitting your deposit…',
   },
   'request-confirm': {
     step: 'request',
-    title: 'Confirming on-chain',
+    title: 'Finalizing your deposit',
     sub: 'Usually completes within a few seconds.',
   },
 };
