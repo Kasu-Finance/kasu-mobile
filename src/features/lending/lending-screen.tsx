@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { Screen } from '@/components/ui/screen';
 
+import { EarnHeader } from './earn-header';
 import { StrategiesList } from './strategies-list';
 import { Withdraw } from './withdraw';
 
@@ -39,7 +40,8 @@ export default function LendingScreen() {
 
   return (
     <Screen>
-      <ThemedText type="subtitle">Strategies</ThemedText>
+      <ThemedText type="subtitle">Earn</ThemedText>
+      <EarnHeader />
       <StrategiesList onSelect={(strategy) => router.push(`/lending/${strategy.id}`)} />
     </Screen>
   );
