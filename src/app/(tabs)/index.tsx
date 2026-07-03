@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { ActivityScreen } from '@/features/activity';
+import { CardHomeEntry } from '@/features/card';
 import { Screen } from '@/components/ui/screen';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { VisaCard } from '@/components/ui/visa-card';
@@ -64,6 +65,9 @@ export default function HomeScreen() {
         <ActionButton label="Send" glyph="↗" onPress={() => setSheet('send')} />
         <ActionButton label="Activity" glyph="≡" onPress={() => router.push('/activity')} />
       </View>
+
+      {/* Card entry — bank-style prompt / manage link, routes to card details. */}
+      <CardHomeEntry address={viewAddress} />
 
       {/* The product hook: interest tops up the card every Thursday. */}
       <EpochYield />

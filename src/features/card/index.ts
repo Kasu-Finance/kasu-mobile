@@ -6,6 +6,7 @@
  *   import { CardScreen } from '@/features/card';
  */
 export { default as CardScreen } from './card-screen';
+export { CardHomeEntry } from './card-home-entry';
 export { CardOnboardWebView } from './card-onboard-webview';
 export type { CardOnboardWebViewProps } from './card-onboard-webview';
 

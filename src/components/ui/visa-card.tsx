@@ -34,6 +34,7 @@ export function VisaCard({
   expiry,
   cvc,
   variant = 'dark',
+  onFlip,
 }: {
   balance: string;
   last4?: string | null;
@@ -42,6 +43,8 @@ export function VisaCard({
   expiry?: string | null;
   cvc?: string | null;
   variant?: 'dark' | 'accent';
+  /** Fired when the card flips; `toBack` true when revealing the details face. */
+  onFlip?: (toBack: boolean) => void;
 }) {
   const shownLast4 = last4 ?? (pan ? pan.slice(-4) : '····');
   const fullPan = pan
@@ -74,6 +77,7 @@ export function VisaCard({
     haptics.press();
     const next = !flipped;
     setFlipped(next);
+    onFlip?.(next);
     progress.value = withTiming(next ? 1 : 0, { duration: 450 });
   };
 

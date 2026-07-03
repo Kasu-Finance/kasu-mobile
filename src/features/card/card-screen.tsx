@@ -11,11 +11,14 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ACCENT } from '@/components/ui/theme-extras';
+import { VisaCard } from '@/components/ui/visa-card';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { formatUnits, formatUsd } from '@/lib/format';
 import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 
 import { useCardOnboard } from './use-card-onboard';
+import { useCardPanReveal, type RevealedCard } from './use-card-pan';
 import { useCardStatus } from './use-card-status';
 import { useEnsureCardSession } from './use-card-session';
 import { haptics } from '@/lib/haptics';
@@ -40,8 +43,17 @@ const ERROR_COLOR = '#e4645a';
 export default function CardScreen() {
   const theme = useTheme();
   const { address } = useEthersSigner();
-  const { status, backendStatus, last4, kycUrl, isLoading, isFetching, refetch } =
-    useCardStatus(address);
+  const {
+    status,
+    backendStatus,
+    last4,
+    kycUrl,
+    balance,
+    activeCardId,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useCardStatus(address);
 
   // Establish the card session invisibly the moment the wallet is ready.
   useEnsureCardSession(address, backendStatus);
@@ -78,7 +90,7 @@ export default function CardScreen() {
   return (
     <View style={styles.gap}>
       {status === 'active' ? (
-        <ActiveState address={address} last4={last4} />
+        <ActiveState address={address} last4={last4} cardId={activeCardId} balance={balance} />
       ) : status === 'rejected' ? (
         <RejectedState address={address} />
       ) : status === 'frozen' ? (
@@ -314,24 +326,43 @@ function FrozenState({
   );
 }
 
-/** `active` — live card: show the visual + top-up flow. */
+/** `active` — live card: the flippable card (real PAN on flip) + top-up flow. */
 function ActiveState({
   address,
   last4,
+  cardId,
+  balance,
 }: {
   address: string;
   last4: string | null;
+  cardId: string | null;
+  balance: string | null;
 }) {
   const topup = useCardTopup();
+  const reveal = useCardPanReveal();
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ txHash: string | null; accepted: boolean } | null>(
     null,
   );
+  const [revealed, setRevealed] = useState<RevealedCard | null>(null);
   const theme = useTheme();
 
   const trimmed = amount.trim();
   const amountValid = Number(trimmed) > 0;
+  // Card-funding balance is USDC minor units (6 decimals).
+  const cardBalance = balance ? formatUsd(formatUnits(balance, 6)) : '$0.00';
+
+  // Fetch the real PAN the first time the user flips to the card back.
+  const handleFlip = (toBack: boolean) => {
+    if (!toBack || revealed || reveal.isPending || !cardId) return;
+    reveal
+      .mutateAsync({ userAddress: address, cardId })
+      .then(setRevealed)
+      .catch(() => {
+        /* leave masked on failure */
+      });
+  };
 
   const handleTopup = async () => {
     setError(null);
@@ -344,7 +375,7 @@ function ActiveState({
       const res = await topup.mutateAsync({ userAddress: address, amount: trimmed });
       const accepted = res.accepted ?? false;
       // 'onchain' mode returns the Funds Storage depositAddress instead of
-      // moving money — sending the USDC transfer from the wallet is W5.
+      // moving money — sending the transfer from the wallet is W5.
       setResult({ txHash: res.depositAddress ?? null, accepted });
       if (accepted) setAmount('');
     } catch (err) {
@@ -354,7 +385,17 @@ function ActiveState({
 
   return (
     <View style={styles.gap}>
-      <CardVisual last4={last4} status="active" />
+      <VisaCard
+        balance={cardBalance}
+        last4={last4}
+        pan={revealed?.pan}
+        expiry={revealed?.expiry}
+        cvc={revealed?.cvc}
+        onFlip={handleFlip}
+      />
+      <ThemedText type="small" themeColor="textSecondary" style={styles.tapHint}>
+        Tap the card to reveal your number.
+      </ThemedText>
 
       <Card style={styles.gap}>
         <ThemedText type="smallBold">Top up</ThemedText>
@@ -434,6 +475,7 @@ const styles = StyleSheet.create({
   gap: { gap: 12 },
   center: { alignItems: 'center', justifyContent: 'center', minHeight: 80 },
   inlineLoading: { paddingVertical: 8, alignItems: 'flex-start' },
+  tapHint: { textAlign: 'center' },
   error: { color: ERROR_COLOR },
   input: {
     height: 52,
