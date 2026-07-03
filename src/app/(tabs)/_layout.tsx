@@ -32,17 +32,13 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="house" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="lend">
-        <NativeTabs.Trigger.Label>Lend</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="earn">
+        <NativeTabs.Trigger.Label>Earn</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="chart.line.uptrend.xyaxis" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="activity">
-        <NativeTabs.Trigger.Label>Activity</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="clock" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="person.crop.circle" />
+      <NativeTabs.Trigger name="rewards">
+        <NativeTabs.Trigger.Label>Rewards</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="gift" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

@@ -34,7 +34,18 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <VisaCard balance={balanceText} last4="4242" />
+      <View style={styles.header}>
+        <ThemedText type="subtitle">Home</ThemedText>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Profile"
+          onPress={() => router.push('/profile')}
+          style={[styles.avatar, { backgroundColor: ACCENT }]}>
+          <Text style={styles.avatarGlyph}>◉</Text>
+        </Pressable>
+      </View>
+
+      <VisaCard balance={balanceText} />
 
       {/* The product hook: yield from lending tops up the VISA card. */}
       <EpochYield />
@@ -42,7 +53,7 @@ export default function HomeScreen() {
       <View style={styles.actions}>
         <ActionButton label="Add funds" glyph="＋" onPress={() => setSheet('add')} />
         <ActionButton label="Withdraw" glyph="↓" onPress={() => setSheet('withdraw')} />
-        <ActionButton label="Accounts" glyph="≡" onPress={() => router.push('/bank')} />
+        <ActionButton label="Activity" glyph="≡" onPress={() => router.push('/activity')} />
         <ActionButton label="Send" glyph="↗" onPress={() => setSheet('send')} />
       </View>
 
@@ -83,6 +94,15 @@ function ActionButton({
 }
 
 const styles = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarGlyph: { fontSize: 16, color: '#241a0c' },
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',

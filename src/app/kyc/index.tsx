@@ -27,7 +27,7 @@ export default function KycRoute() {
     if (dismissedRef.current) return;
     dismissedRef.current = true;
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/profile');
+    else router.replace('/profile');
   }, [router]);
 
   const handleComplete = useCallback(() => {
