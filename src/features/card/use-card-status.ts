@@ -106,6 +106,7 @@ export function useCardStatus(address?: string | null) {
     balance: result?.balance ?? null,
     kycUrl: result?.kycUrl ?? null,
     activeCardId: result?.activeCardId ?? null,
+    cards: result?.cards ?? [],
     isActive: isCardActive(status),
     isLoading: query.isLoading,
     isFetching: query.isFetching,

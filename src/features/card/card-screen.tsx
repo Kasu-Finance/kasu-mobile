@@ -1,4 +1,5 @@
 import { usePrivy } from '@privy-io/expo';
+import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -154,6 +155,20 @@ function OnboardingCard({
     }
   };
 
+  // Creating the card is the last step — send the user back to Home, where the
+  // card entry shows the settling/active state. Avoids stranding them on this
+  // screen after a "thinking then done" gap.
+  const handleCreate = async () => {
+    setError(null);
+    try {
+      await onboard.advanceOnboarding({ userAddress: address });
+      if (router.canGoBack()) router.back();
+      else router.replace('/(tabs)');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error.');
+    }
+  };
+
   // session-required (session still establishing) or none (first read).
   if (backendStatus === 'session-required' || backendStatus === 'none') {
     return (
@@ -211,7 +226,7 @@ function OnboardingCard({
       <Button
         title="Create my card"
         loading={onboard.isPending}
-        onPress={() => run({ userAddress: address })}
+        onPress={handleCreate}
       />
     </Card>
   );

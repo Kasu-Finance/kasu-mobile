@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { useCardStatus } from './use-card-status';
 export function CardHomeEntry({ address }: { address: string | null | undefined }) {
   const theme = useTheme();
   const router = useRouter();
-  const { backendStatus, isActive } = useCardStatus(address);
+  const { backendStatus, isActive, cards } = useCardStatus(address);
 
   if (!address) return null;
 
@@ -32,6 +32,22 @@ export function CardHomeEntry({ address }: { address: string | null | undefined 
           </ThemedText>
         </View>
         <Button title="Manage" variant="secondary" onPress={go} style={styles.cta} />
+      </Card>
+    );
+  }
+
+  // A card exists but isn't active yet — it was just created and is being
+  // activated. Show a settling state (polling picks up 'active' shortly).
+  if (cards.length > 0) {
+    return (
+      <Card style={styles.row}>
+        <View style={styles.rowText}>
+          <ThemedText type="smallBold">Setting up your card</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            This takes a moment — we&apos;ll have it ready shortly.
+          </ThemedText>
+        </View>
+        <ActivityIndicator color={theme.primary} />
       </Card>
     );
   }
