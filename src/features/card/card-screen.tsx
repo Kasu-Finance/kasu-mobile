@@ -2,6 +2,7 @@ import { usePrivy } from '@privy-io/expo';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   StyleSheet,
   TextInput,
   View,
@@ -59,6 +60,15 @@ export default function CardScreen() {
 
   // Establish the card session invisibly the moment the wallet is ready.
   useEnsureCardSession(address, backendStatus);
+
+  // KYC happens in the system browser, so refetch when the app returns to the
+  // foreground — the card then advances past verification automatically.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') void refetch();
+    });
+    return () => sub.remove();
+  }, [refetch]);
 
   // Celebrate the card going live — only on a transition observed while
   // mounted, not when the screen opens with an already-active card.
