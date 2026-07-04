@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import * as WebBrowser from 'expo-web-browser';
+import { Linking } from 'react-native';
 
 import { api } from '@/lib/api/client';
 import { queryClient } from '@/lib/query/query-client';
@@ -83,7 +83,12 @@ export function useCardOnboard() {
           const kycUrl =
             status.kycUrl ?? (await fetchStatus(address)).kycUrl ?? null;
           if (!kycUrl) return 'waiting';
-          await WebBrowser.openBrowserAsync(kycUrl);
+          // Open in the full system browser (not the in-app Safari sheet):
+          // its toolbar collapses on scroll, so the hosted KYC's sticky
+          // submit button stays reachable, and the camera liveness step works
+          // natively. The user returns to the app manually; status polling
+          // picks up completion.
+          await Linking.openURL(kycUrl);
           return 'kyc-browser';
         }
 
