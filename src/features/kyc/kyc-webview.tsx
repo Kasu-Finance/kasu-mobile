@@ -78,15 +78,16 @@ export function KycWebView({ onComplete, onCancel, url }: KycWebViewProps) {
     }
   };
 
-  // Robust to a missing URL — show guidance instead of a blank/erroring WebView.
+  // No hosted verification link available in this build — show a friendly
+  // holding state rather than a developer message. (Identity verification for
+  // saving/earning is being finished — see the plan's KYC track.)
   if (!target) {
     return (
       <Card style={styles.fallback}>
-        <ThemedText type="smallBold">Verification unavailable</ThemedText>
+        <ThemedText type="smallBold">Almost there</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          The identity-verification link isn&apos;t configured for this build. Set
-          {' '}
-          <ThemedText type="code">EXPO_PUBLIC_COMPILOT_KYC_URL</ThemedText> and try again.
+          Identity verification for saving and earning is coming shortly. You
+          can explore everything else in the meantime.
         </ThemedText>
         {onCancel ? <Button title="Back" variant="ghost" onPress={onCancel} /> : null}
       </Card>
