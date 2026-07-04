@@ -12,11 +12,14 @@
       "bundleIdentifier": "finance.kasu.mobile",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Kasu uses the camera to verify your identity when you set up your card.",
+        "NSMicrophoneUsageDescription": "Kasu uses the microphone during identity verification."
       }
     },
     "android": {
       "package": "finance.kasu.mobile",
+      "permissions": ["android.permission.CAMERA"],
       "adaptiveIcon": {
         "backgroundColor": "#1f1f24",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
