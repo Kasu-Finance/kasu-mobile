@@ -16,7 +16,7 @@ import {
   type ActivityItem,
 } from './types';
 import { useTransactionHistory } from './use-transaction-history';
-import { localTransferToActivityItem, useLocalTransfers } from './transfers-store';
+import { useOnchainTransfers } from './use-onchain-transfers';
 
 /**
  * "Recent activity" feed.
@@ -40,7 +40,7 @@ export default function ActivityScreen({
   const { viewAddress } = useViewAddress();
   const query = useTransactionHistory(viewAddress);
   const cardQuery = useCardTransactions(viewAddress);
-  const transfersQuery = useLocalTransfers(viewAddress);
+  const transfersQuery = useOnchainTransfers(viewAddress);
 
   // The tapped row, surfaced in a bottom sheet. `null` = sheet closed.
   const [selected, setSelected] = useState<ActivityItem | null>(null);
@@ -48,7 +48,7 @@ export default function ActivityScreen({
   const allItems = useMemo<ActivityItem[]>(() => {
     const lending = query.data ? toActivityItems(query.data) : [];
     const card = (cardQuery.data ?? []).map(cardTransactionToActivityItem);
-    const transfers = (transfersQuery.data ?? []).map(localTransferToActivityItem);
+    const transfers = transfersQuery.data ?? [];
     return [...lending, ...card, ...transfers].sort(
       (a, b) => b.timestamp - a.timestamp,
     );

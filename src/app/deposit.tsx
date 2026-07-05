@@ -11,7 +11,6 @@ import { Card } from '@/components/ui/card';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { refreshFinancials } from '@/lib/refresh';
-import { recordTransfer } from '@/features/activity/transfers-store';
 import { formatUnits, formatUsd, shortAddress } from '@/lib/format';
 import { DEFAULT_CHAIN_ID } from '@/lib/web3/chains';
 import { useStableBalance } from '@/lib/web3/use-balance';
@@ -48,9 +47,6 @@ export default function DepositRoute() {
       setReceivedAmount(formatUsd(dollars));
       setReceived(true);
       haptics.success();
-      if (viewAddress) {
-        void recordTransfer(viewAddress, { kind: 'received', amount: dollars });
-      }
       // Funds arrived — reload balance, portfolio, card, activity everywhere.
       refreshFinancials();
     }

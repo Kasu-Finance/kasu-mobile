@@ -14,7 +14,6 @@ import { useStableBalance } from '@/lib/web3/use-balance';
 import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 import { haptics } from '@/lib/haptics';
 import { refreshFinancials } from '@/lib/refresh';
-import { recordTransfer } from '@/features/activity/transfers-store';
 
 import { BottomSheet } from './sheet';
 
@@ -112,11 +111,6 @@ export function SendSheet({
       const tx = await usdc.transfer(trimmedTo, value);
       await tx.wait();
       haptics.success();
-      void recordTransfer(address, {
-        kind: 'sent',
-        amount: amount.trim(),
-        counterparty: trimmedTo,
-      });
       refreshFinancials();
       setStep('sent');
     } catch (err) {

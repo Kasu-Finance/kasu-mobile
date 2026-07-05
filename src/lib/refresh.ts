@@ -20,20 +20,15 @@ const KEY = {
   lending: 'lending', // lendingKeys.all
   card: 'mobile', // cardKeys.* → ['mobile','card',...]
   activity: 'activity', // useTransactionHistory
+  transfers: 'onchain-transfers', // useOnchainTransfers
 } as const;
+
+const FINANCIAL_ROOTS = new Set<unknown>(Object.values(KEY));
 
 /** Reload everything money-related. Safe to call from anywhere. */
 export function refreshFinancials(): void {
   queryClient.invalidateQueries({
-    predicate: (q) => {
-      const root = q.queryKey[0];
-      return (
-        root === KEY.balance ||
-        root === KEY.lending ||
-        root === KEY.card ||
-        root === KEY.activity
-      );
-    },
+    predicate: (q) => FINANCIAL_ROOTS.has(q.queryKey[0]),
   });
 }
 
