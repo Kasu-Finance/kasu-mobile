@@ -15,6 +15,7 @@ import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 import { haptics } from '@/lib/haptics';
 import { refreshFinancials } from '@/lib/refresh';
 
+import { AmountKeypad } from './amount-keypad';
 import { BottomSheet } from './sheet';
 
 const ERC20_ABI = [
@@ -73,11 +74,6 @@ export function SendSheet({
   const availableNum = balanceQuery.data
     ? Number(formatUnits(balanceQuery.data, asset.decimals))
     : 0;
-  const amountValid =
-    Number.isFinite(amountNum) && amountNum > 0 && amountNum <= availableNum;
-  const available = balanceQuery.data
-    ? `$${formatUnits(balanceQuery.data, asset.decimals)}`
-    : '$0.00';
 
   const close = () => {
     setStep('recipient');
@@ -180,24 +176,19 @@ export function SendSheet({
       {step === 'amount' && (
         <View style={styles.section}>
           <ThemedText type="small" themeColor="textSecondary">
-            To {shortAddress(trimmedTo)} · Available {available}
+            To {shortAddress(trimmedTo)}
           </ThemedText>
-          <TextInput
+          <AmountKeypad
             value={amount}
-            onChangeText={setAmount}
-            placeholder="0.00"
-            placeholderTextColor={theme.textSecondary}
-            keyboardType="decimal-pad"
-            inputMode="decimal"
-            style={[inputStyle, styles.amountInput]}
-            autoFocus
+            onChange={setAmount}
+            available={availableNum}
+            onContinue={() => setStep('review')}
+            error={
+              amount.length > 0 && amountNum > availableNum
+                ? 'Not enough funds.'
+                : null
+            }
           />
-          {amount.length > 0 && !amountValid ? (
-            <ThemedText type="small" style={{ color: ERROR_COLOR }}>
-              {amountNum > availableNum ? 'Not enough funds.' : 'Enter an amount greater than zero.'}
-            </ThemedText>
-          ) : null}
-          <Button title="Continue" disabled={!amountValid} onPress={() => setStep('review')} />
           <Button title="Back" variant="ghost" onPress={() => setStep('recipient')} />
         </View>
       )}

@@ -1,7 +1,9 @@
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { type PropsWithChildren, useEffect } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -68,6 +70,9 @@ export function BottomSheet({
       onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <Pressable style={styles.backdropFill} onPress={onClose} accessibilityRole="button" />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.safe}>
         <SafeAreaView edges={['bottom']} style={styles.safe}>
           <Animated.View
             style={[
@@ -98,6 +103,7 @@ export function BottomSheet({
             {children}
           </Animated.View>
         </SafeAreaView>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
