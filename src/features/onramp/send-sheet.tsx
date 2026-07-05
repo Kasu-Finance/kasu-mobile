@@ -110,17 +110,27 @@ export function SendSheet({
         return;
       }
 
-      // Send through Privy's provider (NOT ethers pre-signing): Privy estimates
-      // gas correctly and applies the sponsorship policy. Pre-populating gas via
-      // ethers caused "intrinsic gas too low" and bypassed sponsorship.
+      // Send through Privy's provider (NOT ethers pre-signing, which set a 0 gas
+      // limit → "intrinsic gas too low"). We also estimate the gas ourselves and
+      // pass it explicitly, because the embedded-wallet provider does not always
+      // fill it. Privy still sponsors the fee via the dashboard gas policy.
       const data = new ethers.utils.Interface(ERC20_ABI).encodeFunctionData(
         'transfer',
         [trimmedTo, value],
       );
+      const tx: Record<string, string> = { from: address, to: asset.address, data };
+      try {
+        const est = await rpc.estimateGas({ from: address, to: asset.address, data });
+        tx.gas = est.mul(120).div(100).toHexString(); // +20% headroom
+      } catch {
+        // Estimation can fail transiently; never leave gas unset (→ 0 → "intrinsic
+        // gas too low"). 100k is ample for an ERC20 transfer (~55k actual).
+        tx.gas = ethers.BigNumber.from(100_000).toHexString();
+      }
       const provider = await wallet.getProvider();
       const txHash = (await provider.request({
         method: 'eth_sendTransaction',
-        params: [{ from: address, to: asset.address, data }],
+        params: [tx],
       })) as string;
 
       await rpc.waitForTransaction(txHash);
