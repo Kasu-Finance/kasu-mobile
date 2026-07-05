@@ -13,20 +13,14 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ACCENT } from '@/components/ui/theme-extras';
-import { VisaCard } from '@/components/ui/visa-card';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatUnits, formatUsd } from '@/lib/format';
 import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 
 import { useCardOnboard } from './use-card-onboard';
-import { useCardPanReveal, type RevealedCard } from './use-card-pan';
 import { useCardStatus } from './use-card-status';
-import { useCardTransactions } from './use-card-transactions';
-import { useSeedDemoSpend, useSimulatePurchase } from './use-card-demo';
 import { useEnsureCardSession } from './use-card-session';
 import { haptics } from '@/lib/haptics';
-import { useCardTopup } from './use-card-topup';
 import { type CardBackendStatus, type CardStatus } from './types';
 
 const ERROR_COLOR = '#e4645a';
@@ -52,8 +46,6 @@ export default function CardScreen() {
     backendStatus,
     last4,
     kycUrl,
-    balance,
-    activeCardId,
     isLoading,
     isFetching,
     refetch,
@@ -103,7 +95,7 @@ export default function CardScreen() {
   return (
     <View style={styles.gap}>
       {status === 'active' ? (
-        <ActiveState address={address} last4={last4} cardId={activeCardId} balance={balance} />
+        <ActiveState />
       ) : status === 'rejected' ? (
         <RejectedState address={address} />
       ) : status === 'frozen' ? (
@@ -353,124 +345,26 @@ function FrozenState({
   );
 }
 
-/** `active` — live card: the flippable card (real PAN on flip) + top-up flow. */
-function ActiveState({
-  address,
-  last4,
-  cardId,
-  balance,
-}: {
-  address: string;
-  last4: string | null;
-  cardId: string | null;
-  balance: string | null;
-}) {
-  const topup = useCardTopup();
-  const reveal = useCardPanReveal();
-  const simulate = useSimulatePurchase();
-  const cardTx = useCardTransactions(address);
-  const [amount, setAmount] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ txHash: string | null; accepted: boolean } | null>(
-    null,
-  );
-  const [revealed, setRevealed] = useState<RevealedCard | null>(null);
-  const theme = useTheme();
-
-  // Sandbox: seed a few realistic purchases the first time the card is live.
-  useSeedDemoSpend(address, true, cardTx.data?.length ?? 0, cardTx.isLoading);
-
-  const trimmed = amount.trim();
-  const amountValid = Number(trimmed) > 0;
-  // Card-funding balance is USDC minor units (6 decimals).
-  const cardBalance = balance ? formatUsd(formatUnits(balance, 6)) : '$0.00';
-
-  // Fetch the real PAN the first time the user flips to the card back.
-  const handleFlip = (toBack: boolean) => {
-    if (!toBack || revealed || reveal.isPending || !cardId) return;
-    reveal
-      .mutateAsync({ userAddress: address, cardId })
-      .then(setRevealed)
-      .catch(() => {
-        /* leave masked on failure */
-      });
-  };
-
-  const handleTopup = async () => {
-    setError(null);
-    setResult(null);
-    if (!amountValid) {
-      setError('Enter an amount greater than zero.');
-      return;
-    }
-    try {
-      const res = await topup.mutateAsync({ userAddress: address, amount: trimmed });
-      const accepted = res.accepted ?? false;
-      // 'onchain' mode returns the Funds Storage depositAddress instead of
-      // moving money — sending the transfer from the wallet is W5.
-      setResult({ txHash: res.depositAddress ?? null, accepted });
-      if (accepted) setAmount('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error.');
-    }
-  };
-
+/**
+ * `active` — the card is live. Management (reveal number, top up, activity)
+ * lives on Home (tap the card there), so this just points the user home. Rarely
+ * seen: `handleCreate` already navigates home on creation.
+ */
+function ActiveState() {
   return (
-    <View style={styles.gap}>
-      <VisaCard
-        balance={cardBalance}
-        last4={last4}
-        pan={revealed?.pan}
-        expiry={revealed?.expiry}
-        cvc={revealed?.cvc}
-        onFlip={handleFlip}
-      />
-      <ThemedText type="small" themeColor="textSecondary" style={styles.tapHint}>
-        Tap the card to reveal your number.
+    <Card style={styles.gap}>
+      <ThemedText type="smallBold">Your card is ready</ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        Tap your card on the home screen to reveal your number, top up and see
+        your spending.
       </ThemedText>
-
-      <Card style={styles.gap}>
-        <ThemedText type="smallBold">Top up</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          Move money from your balance onto your card.
-        </ThemedText>
-        <TextInput
-          value={amount}
-          onChangeText={setAmount}
-          placeholder="0.00"
-          placeholderTextColor={theme.textSecondary}
-          keyboardType="decimal-pad"
-          inputMode="decimal"
-          style={[
-            styles.input,
-            { backgroundColor: theme.backgroundElement, color: theme.text },
-          ]}
-        />
-        {error && <ErrorText message={error} />}
-        {result && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {result.accepted
-              ? result.txHash
-                ? `Top-up submitted · ${result.txHash.slice(0, 10)}…`
-                : 'Top-up accepted.'
-              : 'Top-up was not accepted. Try again.'}
-          </ThemedText>
-        )}
-        <Button
-          title="Top up card"
-          loading={topup.isPending}
-          disabled={!amountValid}
-          onPress={handleTopup}
-        />
-      </Card>
-
       <Button
-        title="Add a sample purchase"
-        variant="ghost"
-        loading={simulate.isPending}
-        onPress={() => simulate.mutate(address)}
+        title="Go to home"
+        onPress={() =>
+          router.canGoBack() ? router.back() : router.replace('/(tabs)')
+        }
       />
-    </View>
+    </Card>
   );
 }
 

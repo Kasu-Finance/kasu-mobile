@@ -7,13 +7,16 @@
  */
 export { default as CardScreen } from './card-screen';
 export { CardHomeEntry } from './card-home-entry';
+export { CardManagement } from './card-management';
 export { CardOnboardWebView } from './card-onboard-webview';
 export type { CardOnboardWebViewProps } from './card-onboard-webview';
 
 export { useCardStatus } from './use-card-status';
 export { useCardOnboard, type OnboardStep } from './use-card-onboard';
 export { useCardTopup } from './use-card-topup';
+export { useCardTransactions } from './use-card-transactions';
 export { useCardPanReveal, type RevealedCard } from './use-card-pan';
+export { useSimulatePurchase, useSeedDemoCard } from './use-card-demo';
 
 export {
   cardKeys,

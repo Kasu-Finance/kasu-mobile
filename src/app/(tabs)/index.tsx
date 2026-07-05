@@ -5,7 +5,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { ActivityScreen } from '@/features/activity';
-import { CardHomeEntry } from '@/features/card';
+import {
+  CardHomeEntry,
+  CardManagement,
+  useCardStatus,
+  useCardPanReveal,
+  useCardTransactions,
+  useSeedDemoCard,
+  type RevealedCard,
+} from '@/features/card';
 import { Screen } from '@/components/ui/screen';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { VisaCard } from '@/components/ui/visa-card';
@@ -22,18 +30,52 @@ import { useViewAddress } from '@/lib/web3/use-view-address';
 
 type Sheet = 'add' | 'withdraw' | 'send' | null;
 
-/** Home: neobank-style dashboard — VISA card + quick actions. */
+/**
+ * Home: neobank dashboard. The card is the hero — tapping it flips it to reveal
+ * the real number and swaps the content below for card management (top up +
+ * card activity). Flipping back returns to the account view.
+ */
 export default function HomeScreen() {
   const router = useRouter();
   const { viewAddress } = useViewAddress();
   const chain = getChain(DEFAULT_CHAIN_ID);
   const { data: balance, isLoading } = useStableBalance(viewAddress, DEFAULT_CHAIN_ID);
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [flipped, setFlipped] = useState(false);
+
+  const card = useCardStatus(viewAddress);
+  const cardTx = useCardTransactions(viewAddress);
+  const reveal = useCardPanReveal();
+  const [revealed, setRevealed] = useState<RevealedCard | null>(null);
+
+  // Fund + seed a realistic history the first time the card is active.
+  useSeedDemoCard(viewAddress, card.isActive, cardTx.data?.length ?? 0, cardTx.isLoading);
 
   const balanceText =
     isLoading || balance == null
       ? '—'
       : `$${formatUnits(balance, chain.stableAsset.decimals)}`;
+
+  const showManagement = flipped && card.isActive;
+
+  const handleFlip = (toBack: boolean) => {
+    setFlipped(toBack);
+    if (
+      toBack &&
+      card.isActive &&
+      card.activeCardId &&
+      !revealed &&
+      !reveal.isPending &&
+      viewAddress
+    ) {
+      reveal
+        .mutateAsync({ userAddress: viewAddress, cardId: card.activeCardId })
+        .then(setRevealed)
+        .catch(() => {
+          /* leave masked on failure */
+        });
+    }
+  };
 
   return (
     <Screen>
@@ -48,34 +90,55 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      <VisaCard balance={balanceText} />
+      <VisaCard
+        balance={balanceText}
+        last4={card.last4}
+        pan={revealed?.pan}
+        expiry={revealed?.expiry}
+        cvc={revealed?.cvc}
+        onFlip={handleFlip}
+      />
 
-      {/* Plasma One order: balance under the card, then the primary CTA. */}
-      <View style={styles.balanceBlock}>
-        <ThemedText type="small" themeColor="textSecondary">
-          BALANCE
+      {card.isActive ? (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.tapHint}>
+          {showManagement
+            ? 'Tap the card to go back.'
+            : 'Tap the card to reveal your number and manage it.'}
         </ThemedText>
-        <ThemedText type="title">{balanceText}</ThemedText>
-      </View>
+      ) : null}
 
-      <Button title="Add money" onPress={() => setSheet('add')} />
+      {showManagement ? (
+        <CardManagement address={viewAddress as string} balance={card.balance} />
+      ) : (
+        <>
+          {/* Balance under the card, then the primary CTA. */}
+          <View style={styles.balanceBlock}>
+            <ThemedText type="small" themeColor="textSecondary">
+              BALANCE
+            </ThemedText>
+            <ThemedText type="title">{balanceText}</ThemedText>
+          </View>
 
-      <View style={styles.actions}>
-        <ActionButton label="Withdraw" glyph="↓" onPress={() => setSheet('withdraw')} />
-        <ActionButton label="Send" glyph="↗" onPress={() => setSheet('send')} />
-        <ActionButton label="Activity" glyph="≡" onPress={() => router.push('/activity')} />
-      </View>
+          <Button title="Add money" onPress={() => setSheet('add')} />
 
-      {/* Card entry — bank-style prompt / manage link, routes to card details. */}
-      <CardHomeEntry address={viewAddress} />
+          <View style={styles.actions}>
+            <ActionButton label="Withdraw" glyph="↓" onPress={() => setSheet('withdraw')} />
+            <ActionButton label="Send" glyph="↗" onPress={() => setSheet('send')} />
+            <ActionButton label="Activity" glyph="≡" onPress={() => router.push('/activity')} />
+          </View>
 
-      {/* The product hook: interest tops up the card every Thursday. */}
-      <EpochYield />
+          {/* Setup prompt only until the card exists — once active, the card
+              itself (flip) is the entry to management. */}
+          {!card.isActive ? <CardHomeEntry address={viewAddress} /> : null}
 
-      <Portfolio summaryOnly />
+          {/* The product hook: interest tops up the card every Thursday. */}
+          <EpochYield />
 
-      {/* Recent activity feed, Plasma-style, right on Home. */}
-      <ActivityScreen />
+          <Portfolio summaryOnly />
+
+          <ActivityScreen />
+        </>
+      )}
 
       <AddMoneySheet visible={sheet === 'add'} onClose={() => setSheet(null)} />
       <WithdrawSheet visible={sheet === 'withdraw'} onClose={() => setSheet(null)} />
@@ -112,6 +175,7 @@ function ActionButton({
 
 const styles = StyleSheet.create({
   balanceBlock: { gap: 2 },
+  tapHint: { textAlign: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   avatar: {
     width: 36,
