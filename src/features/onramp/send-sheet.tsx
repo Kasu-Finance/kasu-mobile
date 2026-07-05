@@ -13,6 +13,7 @@ import { DEFAULT_CHAIN_ID, getChain } from '@/lib/web3/chains';
 import { useStableBalance } from '@/lib/web3/use-balance';
 import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 import { haptics } from '@/lib/haptics';
+import { refreshFinancials } from '@/lib/refresh';
 
 import { BottomSheet } from './sheet';
 
@@ -110,6 +111,7 @@ export function SendSheet({
       const tx = await usdc.transfer(trimmedTo, value);
       await tx.wait();
       haptics.success();
+      refreshFinancials();
       setStep('sent');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');

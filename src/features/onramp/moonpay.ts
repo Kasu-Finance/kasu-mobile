@@ -1,7 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 
 import { api } from '@/lib/api/client';
-import { queryClient } from '@/lib/query/query-client';
+import { refreshFinancials } from '@/lib/refresh';
 
 export type MoonPayResult = 'opened' | 'unavailable';
 
@@ -19,8 +19,8 @@ export async function openMoonPayBuy(userAddress: string): Promise<MoonPayResult
     );
     if (!res.data?.url) return 'unavailable';
     await WebBrowser.openBrowserAsync(res.data.url);
-    // Money may have landed — refresh balances on return.
-    void queryClient.invalidateQueries({ queryKey: ['stable-balance'] });
+    // Money may have landed — reload everything money-related on return.
+    refreshFinancials();
     return 'opened';
   } catch {
     return 'unavailable';

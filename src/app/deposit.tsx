@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import { refreshFinancials } from '@/lib/refresh';
 import { shortAddress } from '@/lib/format';
 import { DEFAULT_CHAIN_ID } from '@/lib/web3/chains';
 import { useStableBalance } from '@/lib/web3/use-balance';
@@ -42,6 +43,8 @@ export default function DepositRoute() {
     if (!received && BigInt(b) > BigInt(baseline.current)) {
       setReceived(true);
       haptics.success();
+      // Funds arrived — reload balance, portfolio, card, activity everywhere.
+      refreshFinancials();
     }
   }, [balanceQuery.data, received]);
 
@@ -87,7 +90,18 @@ export default function DepositRoute() {
         <View style={styles.qrWrap}>
           <View style={styles.qrCard}>
             {viewAddress ? (
-              <QRCode value={viewAddress} size={200} color="#1f1f24" backgroundColor="#ffffff" />
+              <QRCode
+                value={viewAddress}
+                size={200}
+                color="#1f1f24"
+                backgroundColor="#ffffff"
+                ecl="H"
+                logo={require('../../assets/brand/mark-brass.png')}
+                logoSize={44}
+                logoBackgroundColor="#ffffff"
+                logoMargin={4}
+                logoBorderRadius={8}
+              />
             ) : (
               <ThemedText type="small">Sign in to see your account number</ThemedText>
             )}
