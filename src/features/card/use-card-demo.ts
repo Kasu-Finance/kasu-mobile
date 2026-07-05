@@ -6,34 +6,61 @@ import { queryClient } from '@/lib/query/query-client';
 
 import { cardKeys } from './types';
 
+/** Starting demo balance loaded onto a fresh card so purchases can authorize. */
+const DEMO_TOPUP = '500';
+
+async function ensureFunded(userAddress: string): Promise<void> {
+  // On a fresh simulator card the funding prerequisite is a simulator deposit,
+  // so this loads a starting balance. On an already-funded card it's a no-op
+  // (returns onchain mode, accepted:false) — harmless.
+  try {
+    await api.post('/mobile/card/topup', { userAddress, amount: DEMO_TOPUP });
+  } catch {
+    /* best-effort */
+  }
+}
+
+async function simulateOne(userAddress: string): Promise<boolean> {
+  try {
+    const res = await api.post<{ ok: boolean }>(
+      '/mobile/card/demo/simulate-purchase',
+      { userAddress },
+    );
+    return Boolean(res.data?.ok);
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Triggers a single sandbox-only simulated card purchase
- * (`POST /mobile/card/demo/simulate-purchase`). No-ops against live Immersve
- * (the backend guards it), so it is safe to leave wired.
+ * Adds one sample card purchase — funding the card first if needed (a purchase
+ * can't authorize against a $0 balance). Sandbox-only via the backend guard.
  */
 export function useSimulatePurchase() {
   return useMutation({
     mutationFn: async (userAddress: string) => {
-      const res = await api.post<{ ok: boolean; merchant?: string }>(
-        '/mobile/card/demo/simulate-purchase',
-        { userAddress },
-      );
-      return res.data;
+      let ok = await simulateOne(userAddress);
+      if (!ok) {
+        // Likely insufficient balance — fund and retry once.
+        await ensureFunded(userAddress);
+        ok = await simulateOne(userAddress);
+      }
+      return { ok };
     },
     onSettled: (_d, _e, userAddress) => {
-      void queryClient.invalidateQueries({
-        queryKey: cardKeys.transactions(userAddress),
-      });
+      void queryClient.invalidateQueries({ queryKey: cardKeys.transactions(userAddress) });
+      void queryClient.invalidateQueries({ queryKey: cardKeys.status(userAddress) });
     },
   });
 }
 
 /**
- * Once, when the card first becomes active with no transactions yet, seeds a
- * few realistic purchases so the activity feed looks alive. Sandbox-only via
- * the backend guard; runs a fixed number of times per mount.
+ * Once, when the card first becomes active with no transactions, gives it a
+ * realistic look: loads a starting balance, then seeds a few purchases. This
+ * is what makes the card feel real in the demo — a funded card with a spending
+ * history rather than an empty $0 card. Sandbox-only (backend guard).
  */
-export function useSeedDemoSpend(
+export function useSeedDemoCard(
   address: string | null | undefined,
   isActive: boolean,
   transactionCount: number,
@@ -52,21 +79,14 @@ export function useSeedDemoSpend(
 
     let cancelled = false;
     (async () => {
+      await ensureFunded(address);
       for (let i = 0; i < 3 && !cancelled; i++) {
-        try {
-          const res = await api.post<{ ok: boolean }>(
-            '/mobile/card/demo/simulate-purchase',
-            { userAddress: address },
-          );
-          if (!res.data?.ok) break; // not sandbox / no active card — stop
-        } catch {
-          break;
-        }
+        const ok = await simulateOne(address);
+        if (!ok) break; // not sandbox / no active card — stop
       }
       if (!cancelled) {
-        void queryClient.invalidateQueries({
-          queryKey: cardKeys.transactions(address),
-        });
+        void queryClient.invalidateQueries({ queryKey: cardKeys.transactions(address) });
+        void queryClient.invalidateQueries({ queryKey: cardKeys.status(address) });
       }
     })();
 
