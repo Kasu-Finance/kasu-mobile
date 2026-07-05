@@ -1,160 +1,176 @@
 # kasu-mobile — implementation log & current state
 
-A React Native (Expo SDK 56) neobank wallet. **Motto / selling point:
-"Spend yield from your VISA card"** — yield earned from lending to Kasu is
-auto-topped-up onto the user's VISA card. Pillars: Privy embedded wallets,
-Compilot KYC, Wayex fiat on/off-ramp, **lending to Kasu pools**, P2P stablecoin
-payments, push notifications, Gnosis Pay card.
+A React Native (Expo SDK 56) **neobank**. **Motto: "Spend yield from your VISA
+card."** Money you hold earns yield by lending to Kasu, and that yield tops up a
+Mastercard you spend anywhere.
 
-## Current state (demo-ready)
+**Product thesis (the rule everything follows): copy Plasma One's UX 1:1, with
+ZERO crypto vocabulary.** No "USDC / wallet / crypto / DeFi / on-chain / token"
+anywhere in the UI — dollars, Balance, Account, Card. The target user is a
+non-crypto "neobank" customer; the embedded wallet and chain are invisible
+plumbing. Goal: a **fully operational app, everything real, except Mastercard
+spending** (Immersve sandbox — which must still *look* real).
 
-- Runs on the **iOS Simulator** and as an **Android APK** (EAS builds). Both repos
-  (`kasu-mobile` + `kasu-backend`) typecheck clean; `kasu-backend` `/mobile/*` is
-  **deployed** (Lightsail, `backend.kasu.finance`).
-- The app boots into a **read-only DEMO mode** (see below): Home shows the VISA
-  card + "Weekly top up" + the real portfolio; Lend shows real strategies +
-  details; Activity shows the tx feed; Profile shows identity.
-- Screens are **functionally complete** and **styled to the Kasu brand**
-  (dark-only, brass `#d29e61`, DM Sans + Crimson Text serif headings, gold-bonsai
-  VISA card). See "Branding" below.
+> Full roadmap + vendor research + decisions live in the workspace-root doc
+> **`docs/mobile-neobank-concept-plan.md`** (one level up from this repo). This
+> file is the implementation log; that file is the plan.
 
-### Demo mode — REMOVED (2026-07-02)
-Demo mode is gone: real Privy login everywhere, real (logged-in) wallet data only.
-- The old claim that login needed App Attest was **wrong** — `invalid_native_app_id`
-  was the Privy app client missing `finance.kasu.mobile` in Allowed app identifiers
-  (dashboard fix, done). Login now works on the iOS Simulator.
-- Removed: `EXPO_PUBLIC_DEV_LOGIN_BYPASS`, `EXPO_PUBLIC_DEMO_PORTFOLIO_ADDRESS`
-  (env + all eas.json profiles), the login bypass branches, `useViewAddress()`'s
-  demo fallback + `isDemo`, `DemoKycGate` (real Compilot `KycGate` gates deposits
-  again), the deposit-flow no-signer review path, the stub Activity feed, the stub
-  bank details (`demo-bank.ts`) — fiat tabs/bank screen now show explicit
-  "coming soon"/empty states pending the W9 rail — and the fixed card PAN/EXP/CVC
-  (VisaCard takes optional real `pan`/`expiry`/`cvc` props, masked when absent).
+## Current state (2026-07-05)
 
-## Branding (Kasu brand pass)
+- **Runs as a dev client on a real iPhone** (EAS `development` profile) with
+  **Metro hot reload** (`npx expo start`) — JS changes appear in ~1s, no rebuild.
+  Also runs on the iOS Simulator (`simulator` profile).
+- **Real login** — email OTP / Google / Apple via Privy embedded wallets. **No
+  demo mode** (removed 2026-07-02: no login bypass, no demo portfolio address).
+- **Backend is live in prod** — `kasu-backend` on Lightsail (`backend.kasu.finance`),
+  the whole `/mobile/*` surface enabled (`MOBILE_ENABLED=true`) with the Immersve
+  card module against the Immersve public sandbox.
+- **Card works end-to-end** on the Immersve sandbox: silent wallet session →
+  in-app identity check → create + activate → real PAN on the flippable card →
+  funded balance + seeded purchases in the feed.
+- Dark-only, branded (brass `#d29e61`, DM Sans + Crimson Text serif, gold-bonsai
+  card, brass app icon).
 
-The app is restyled to the web design system (`kasu-ui/src/app/globals.css`).
-**JS-only** — no native rebuild (fonts load at runtime via `expo-font`;
-`react-native-svg` + `expo-image` were already linked).
+### What's real vs stubbed
+| Area | State |
+|---|---|
+| Login (email/Google/Apple), embedded wallet | ✅ real |
+| Lending strategies, APY, portfolio | ✅ real (on-chain via SDK) |
+| Card: onboarding, KYC, PAN reveal, top-up, purchases | ✅ real on the **Immersve sandbox** (looks real; testnet behind it) |
+| Activity feed (lending + card purchases merged) | ✅ real |
+| Fiat "Add funds" (bank transfer / debit card) | 🔶 stubbed "Soon" — MoonPay/Bridge, plan Phase D |
+| Lending KYC (Compilot) on mobile | 🔶 deferred — unbuilt gap (see below); shows "coming shortly" |
+| Withdraw / off-ramp | 🔶 not wired (Phase D) |
+| Payments / notifications endpoints | ⚠️ enabled but DB tables may be unprovisioned; card path unaffected |
 
-- **Dark-only.** `useTheme()` always returns the brand palette; the root layout
-  forces `DarkTheme` + `userInterfaceStyle: "dark"` + `StatusBar light`.
-- **Tokens** live in `src/constants/theme.ts` (`Colors` — bg `#1f1f24`, card
-  `#2b2b30`, brass `primary #d29e61`, `onAccent #241a0c`, `success #84a45f`,
-  `destructive #e4645a`, …) plus `Radius`. The legacy accent `#c4996c` →
-  `#d29e61`; `ACCENT` in `theme-extras.ts` now equals the brass primary. All
-  previously-hardcoded hexes were mapped to brand values.
-- **Fonts** bundled via `@expo-google-fonts/{dm-sans,crimson-text}` and gated in
-  `_layout.tsx`. **Crimson Text** (serif) carries headings — `ThemedText`
-  `title`/`subtitle` are serif, so every screen heading + big number inherits it
-  automatically; **DM Sans** carries body/UI.
-- **Mark** — `src/components/ui/kasu-mark.tsx` renders the chevron via
-  react-native-svg (path inlined; no svg-transformer configured). `Brand` =
-  mark + serif "Kasu".
-- **VISA card** (`visa-card.tsx`) — front: mark + serif wordmark on brand-dark,
-  brass detailing; **back: full-bleed gold bonsai** (`assets/brand/bonsai.png`,
-  downscaled to 871×1000) under a dark scrim, with PAN/EXP/CVC overlaid. Flip
-  animation unchanged.
-- **Buttons** are brass pills; **NativeTabs** tinted brass on a dark bar.
+## IA / screen map
+Tabs (NativeTabs): **Home / Earn / Rewards**. Activity and Profile are **pushed
+routes** (`/activity`, `/profile`), not tabs.
 
-## UI refinements (since the branding pass)
+- **Home** (`app/(tabs)/index.tsx`) — the **card is the hero**. Tapping it flips
+  the card (revealing the real number, with a "Loading your details…" state
+  while the PAN fetches) and swaps the content below for **card management**
+  (card balance, top up, card activity, sample purchase). Flipping back returns
+  to the account view: two Plasma-style actions (**Add funds** / **Send**), the
+  weekly-interest hook (`EpochYield`), the portfolio summary, and the merged
+  activity feed. Single balance, shown on the card. **Pull down to refresh.**
+- **Earn** (`app/(tabs)/earn.tsx` → `lending-screen`) — `EarnHeader` (best live
+  APY headline + "$X could earn you $Y/yr" simulator + weekly-Thursday framing)
+  over the strategies list → strategy detail (`/lending/[poolId]`) → the stepped
+  deposit flow (`use-deposit.ts`: contract → sign → exact-amount approve →
+  deposit → receipt). Deposits are gated by the real Compilot `KycGate`.
+- **Rewards** (`app/(tabs)/rewards.tsx`) — cashback + referral shape (zeros until
+  the card program feeds it), Thursday framing.
+- **Activity** (`app/activity.tsx`) — merged feed (lending + card `spend`) with a
+  segmented Activity / Payments / Alerts switcher; tap a row for a detail sheet.
+- **Profile** (`app/profile.tsx`) — Privy identity, account/KYC, settings, sign out.
+- **Onboarding** (`app/(auth)/`) — `welcome` (card hero + motto) → `features`
+  (3-slide carousel) → `login` (Apple first, then Google, then email). Logged-out
+  entry redirects to `/(auth)/welcome`.
 
-All JS-only; shipped on `master` (latest `c74859d`, pushed to origin).
+## Card integration (Immersve) — the centerpiece
+Replaced the earlier Gnosis Pay stub. Non-custodial: the user's Privy embedded
+**EOA** funds a Mastercard on the Immersve rail. (Smart-account/Safe signatures
+are rejected by Immersve — verified — so it's a plain EOA; see plan §3.1.)
 
-- **Add money sheet** (`features/onramp/add-money-sheet.tsx`) — reworked to a single
-  **EUR / USD / USDC** selector (no more SEPA/Debit-card rows). EUR/USD show the
-  bank-transfer IBAN/BIC/Reference directly; **USDC** is the on-chain Base address
-  + copy button (NOT a Wayex rail). `Segmented` now supports a leading `icon`
-  (`SegmentedOption.icon`); USDC uses `src/components/ui/usdc-mark.tsx`
-  (react-native-svg token logo) so it aligns with the EUR/USD flags.
-- **Glass** — the shared bottom sheet (`features/onramp/sheet.tsx`, used by Add
-  money / Withdraw / Send **and** the Activity transaction-detail dialog) renders
-  `expo-glass-effect` `GlassView` on iOS 26+ (`glassEffectStyle="regular"`,
-  `tintColor` `rgba(31,31,36,0.45)`); solid `theme.background` fallback elsewhere
-  (gated by `isLiquidGlassAvailable()`).
-- **Lend strategy cards** (`features/lending/strategies-list.tsx`) — restyled to the
-  web `strategy-card`: serif title, asset-class line, an **elevated Net APY panel**
-  (`cardElevated` bg + border, big brass serif figure), green **⚡ Live** /
-  terracotta **Full** status pill, and divided TVL / capacity rows.
-- **Splash** — branded: white Kasu logo on `#1f1f24` (`assets/brand/splash-logo.png`,
-  wired in `app.json`'s `expo-splash-screen`). NOTE: keep it a single (non-`dark`)
-  variant — a `dark` block conflicts with the forced `userInterfaceStyle: "dark"`.
-- **Removed demo disclaimer copy** — "Demo only…" / "Withdrawals are disabled…" /
-  "Demo account — read only…" / "Sending is disabled…".
-- **Safe-area fix** — `Screen` gained an `edges` prop (default `['top']`). The
-  Activity tab pins its segmented switcher above the scroll body, so the switcher
-  carries the top inset (`insets.top + 12`) and the body `Screen edges={[]}` opts
-  out — fixes the brass segment that used to render under the status bar.
+App (`src/features/card/`):
+- `use-card-session.ts` — **silent SIWE**: the embedded wallet signs Immersve's
+  challenge programmatically the moment it's ready, so the user never sees a
+  "connect/sign wallet" step.
+- `use-card-status.ts` — the state machine: `session-required → kyc-required →
+  kyc-pending → ready → active` (+ `frozen`/`rejected`). Polls while settling.
+- `card-screen.tsx` — onboarding sub-flow (bank-style copy: "Verify your
+  identity" with a phone field + the account email, framed as a card-partner
+  check). Create navigates back to Home.
+- **In-app KYC** — `app/card-kyc.tsx` hosts the hosted check in a full-screen
+  `react-native-webview` (camera via `NSCameraUsageDescription`), our own header,
+  no browser chrome. Refetches card status on close / app-foreground.
+- `card-management.tsx` — the flipped-card panel on Home (balance, top up, card
+  activity, sample purchase).
+- `use-card-pan.ts` — reveals the real PAN via a single-use secure token,
+  fetched **by the app** (card numbers never transit our backend, PCI).
+- `use-card-demo.ts` — sandbox demo: funds the card ($500 simulator deposit) then
+  seeds a few realistic purchases (a $0 card can't authorize, so funding is
+  required first); guarded to the sandbox by the backend.
+
+Backend (`kasu-backend/src/mobile/card/`):
+- `immersve.client.ts` (typed REST wrapper) + `immersve-session.store.ts`
+  (in-memory per-wallet sessions; single-use refresh tokens) + `mobile-card.service.ts`.
+- Endpoints: `POST session/init`, `POST session/complete`, `GET status`,
+  `POST contact`, `POST create`, `POST pan-token`, `POST topup`,
+  `GET transactions`, `POST demo/simulate-purchase` (sandbox-only, guarded).
+- Config via `IMMERSVE_*` env (base URL, client app id, card program id, funding
+  channel = simulator, network = polygon-amoy, api key/secret). Unconfigured →
+  status `none` (degrades gracefully).
+
+## Backend deploy notes
+- `kasu-backend` deploys via `./deploy.sh` (build linux/amd64 → push → **read the
+  live env back and re-apply with the new image**; never wipes the env map).
+- The `/mobile/*` module is gated by **`MOBILE_ENABLED=true`** in the Lightsail
+  env — it was dormant until 2026-07-03. Env-only changes (adding `IMMERSVE_*`,
+  `MOBILE_ENABLED`) use the guarded read-merge-write pattern in `deploy.sh`.
+- Current prod: image `v33`, env has 74 keys incl. all `IMMERSVE_*` + `MOBILE_ENABLED`.
 
 ## Architecture & non-obvious gotchas
 - **Entry / polyfills** — `index.js` loads `src/lib/web3/crypto-polyfills.ts`
   before `expo-router/entry` (ethers/SDK need `getRandomValues`, Buffer, etc.).
-- **Metro** — `metro.config.js` enables package exports + condition order
+- **Metro** — `metro.config.js` sets package-exports condition order
   `['react-native','browser','require']` so Privy's `jose` uses its WebCrypto
   build, not Node `crypto`. Required.
-- **Providers at the ROOT layout** — `SdkProvider` + `NotificationsProvider` live
-  in `src/app/_layout.tsx`, NOT `(tabs)/_layout`, so root routes (`/lending/[poolId]`,
-  `/bank`) get the SDK (else `useSdk()` → null → "Strategy not found").
-- **SDK config override** — `Kasu.create` is given
+- **Providers at the ROOT layout** — `SdkProvider` + `NotificationsProvider` in
+  `src/app/_layout.tsx` (not `(tabs)/_layout`) so root routes get the SDK.
+- **SDK config override** — `Kasu.create` gets
   `configOverrides: { UNUSED_LENDING_POOL_IDS: ['0x000…000'], poolMetadataMapping: {} }`.
-  The subgraph treats `id_not_in: []` as "match nothing", so the SDK's default
-  empty `unusedPoolIds` returns ZERO pools. The sentinel fixes it.
-- **Read-only SDK** — when there's no signer (demo), `SdkProvider` builds a
-  `JsonRpcProvider`-backed `Kasu` so reads work without login.
-- **Base RPC** — `chains.ts` reads `EXPO_PUBLIC_BASE_RPC_URL` (a Tenderly gateway)
-  with a public `mainnet.base.org` fallback. The public RPC makes `getPositions`
-  take minutes; the gateway is fast. ⚠️ The gateway URL is currently also in
-  committed `eas.json` — see Security follow-ups.
-- **SDK amount units (gotcha)** — `tranche.investedAmount` and
-  `*.yieldEarnings` are ether-formatted $ strings; **`pool.totalInvestedAmount`
-  is 6-decimal BASE units** (scale ÷1e6 before display). `formatUsd` shows 0
-  decimals for amounts ≥ 1000.
+  The subgraph treats `id_not_in: []` as "match nothing", so the default empty
+  list returns ZERO pools; the sentinel fixes it.
+- **Read-only SDK** — before a signer exists, `SdkProvider` builds a
+  `JsonRpcProvider`-backed `Kasu` so strategy/pool reads work pre-login.
+- **Base RPC** — `chains.ts` reads `EXPO_PUBLIC_BASE_RPC_URL` (Tenderly gateway)
+  with a `mainnet.base.org` fallback; the public RPC is slow for `getPositions`.
+- **SDK amount units** — `tranche.investedAmount` / `*.yieldEarnings` are
+  ether-formatted $ strings; **`pool.totalInvestedAmount` is 6-decimal base
+  units** (÷1e6 before display). Card balances are 6-decimal minor units too.
+- **Single balance (the two-pocket reality)** — the wallet balance and the card
+  funding balance are different pockets on Base (deposit-based funding). Home
+  shows the card's spendable balance on the card face once a card is active; the
+  long-term "one balance" story needs approval-based funding on Base (plan §3.4).
 
-## Screen map
-- **Home** (`app/(tabs)/index.tsx`) — flippable VISA card (tap → number/EXP/CVC);
-  "Weekly top up" card (weekly $ yield + countdown to next Thu 06:00 UTC epoch);
-  Add funds / Withdraw / Accounts / Send actions (bottom sheets, Wayex stubbed);
-  the **portfolio** (Total invested, Avg APY, live-ticking lifetime yield,
-  per-position $ amounts).
-- **Lend** (`app/(tabs)/lend.tsx`) — strategies list (genesis/seed filtered out)
-  → strategy details (`/lending/[poolId]`: APY, TVL, capacity, tranche breakdown,
-  back button, KYC stubbed for demo).
-- **Activity** — recent-activity feed; tapping a row opens a **bottom sheet** with
-  tx details (real history → realistic stub fallback).
-- **Profile** — "Kiril Ivanov" + GitHub avatar, wallet/KYC/network, settings, sign out.
-- **Bank** (`/bank`) — stub linked account (read-only).
+## Build / run
+- **Dev loop:** `npx expo start`, open the dev client on the iPhone, hot reload.
+  This is the default now — the device dev client was built once (EAS
+  `development` profile) and only needs a rebuild for **native** changes.
+- **Native changes that force an EAS rebuild** (and a reinstall): new native
+  modules, iOS entitlements/Info.plist (camera, Sign in with Apple), the app
+  icon. Last native rebuild bundled camera permission + in-app KYC + the icon.
+- **EAS** (authed `kivanov82`, project `@kivanov82/kasu`):
+  - Device dev client: `eas build -p ios --profile development`
+  - iOS Simulator: `eas build -p ios --profile simulator` then `eas build:run -p ios --latest`
+  - Apple: Developer Program enrolled (**Individual** — must convert to
+    Organization before real Apple-login users / App Store; SIWA `sub` is
+    team-scoped). Sign in with Apple + custom Apple OAuth creds set in Privy.
+- **`expo run:ios` (local) is broken on this Mac** — CocoaPods; use EAS.
+- Typecheck `npx tsc --noEmit`; lint `npx expo lint` (a few pre-existing
+  react-hooks/immutability + set-state-in-effect items are unrelated noise).
 
-Backend `kasu-backend/src/mobile/` (`MobileModule`): `/mobile/kyc/{status,auth-signature}`,
-`/mobile/payments/*`, `/mobile/notifications/register-push`, `/mobile/card/*`.
+## Roadmap (plan doc §1b, Phases A–E)
+- **A. De-crypto + 1:1 UX** — ✅ vocabulary sweep, Home/Earn/Rewards IA, Plasma
+  Home + Earn, onboarding, card-flip management, Add funds sheet. (A6 residency
+  gate / consent modal / limit presets still to do.)
+- **B. KYC** — Compilot kept for lending now; **Sumsub migration is pre-live**
+  (native RN SDK, avoids the mobile-Compilot WebView problem, but needs the Kasu
+  signer service for the on-chain deposit auth — plan §3.2).
+- **C. Card, looking real** — ✅ done (backend live, silent session, in-app KYC,
+  PAN, funded demo purchases).
+- **D. Fiat rail = MoonPay** — Add funds bank/card, withdraw; Bridge as a later
+  swap. Not wired (needs MoonPay signup).
+- **E. TestFlight** — last.
 
-## How to run / build
-- Typecheck: `npx tsc --noEmit`. Lint: `npx expo lint` (note: a couple of
-  pre-existing `set-state-in-effect` / `array-type` items are unrelated noise).
-- ⚠️ **`expo run:ios` (local dev client) does NOT work on this Mac** — CocoaPods is
-  broken (npm `pod` squatter + brew cocoapods missing `ffi` under Ruby 4.0). Use
-  EAS instead. Fixing it (then hot-reload works) is noted in the auto-memory.
-- EAS (authed as `kivanov82`, project `@kivanov82/kasu`): iOS Simulator =
-  `eas build -p ios --profile simulator --non-interactive`; Android APK =
-  `eas build -p android --profile preview --non-interactive`. **Install the latest
-  sim build:** `eas build:run -p ios --latest` (then it boots into the demo).
-  Real iPhone / TestFlight needs an Apple Developer account.
-- **Reminder:** UI changes are JS-only but the installed sim build is a *release*
-  build (no Metro) — to SEE a change you must rebuild + `build:run` again, OR fix
-  the local dev client. Don't assume a push is visible on the sim.
-
-## Planning — next steps
-1. ~~**Global UI styling to the Kasu brand stylesheet**~~ ✅ **DONE** — see
-   "Branding" above (dark-only, brass + serif, gold-bonsai VISA card).
-2. **Real login on a device** — Android APK on a real phone (Play Integrity) or
-   iPhone via Apple Developer enrollment; then disable the bypass for those builds.
-3. **Wire the stubs** — Wayex session/on-ramp + off-ramp (`/wayex/deposit-crypto`
-   is a 501), Compilot mobile/WebView KYC flow, Gnosis Pay real endpoints + on-chain
-   top-up, push event triggers.
-
-## Security follow-ups
-- ⚠️ **Tenderly Base RPC URL** is committed in `eas.json` (public repo) — restrict
-  it by allowed origin in Tenderly, or move it to an EAS env var / rotate it.
-- The Privy **app id + client id** in `eas.json` are public client identifiers
-  (safe — they ship in the app bundle and the web app).
-- `/mobile/*` controllers are `@Public()` — bind to a wallet signature before a
-  real launch (esp. `kyc/status`, which returns an email).
+## Known gaps / follow-ups
+- **Mobile Compilot KYC is unbuilt** — Compilot has no hosted URL (iframe SDK +
+  wallet-signature auth), so it can't run in a bare WebView. Deferred to the
+  Sumsub migration; the lending KYC gate shows a friendly "coming shortly".
+- **Security:** `/mobile/*` controllers are `@Public()` — bind to a wallet
+  signature before a real launch (esp. `kyc/status`, returns an email). Tenderly
+  RPC URL is in committed `eas.json` — restrict/rotate. Immersve sandbox
+  credentials are public (fine); swap to live creds via env at go-live.
+- **Immersve regions** — docs now list US as "coming soon" (AU/NZ/UK/EEA live).
