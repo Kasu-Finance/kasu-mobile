@@ -1,6 +1,6 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import * as Clipboard from 'expo-clipboard';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 
 import { ThemedText } from '@/components/themed-text';
@@ -60,11 +60,22 @@ export function AddMoneySheet({
   visible: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<Method | null>(null);
 
   const close = () => {
     setSelected(null);
     onClose();
+  };
+
+  const onSelect = (m: Method) => {
+    // "From another account" opens the full-screen deposit view (QR + address).
+    if (m === 'account') {
+      close();
+      router.push('/deposit');
+      return;
+    }
+    setSelected(m);
   };
 
   const current = METHODS.find((m) => m.key === selected);
@@ -73,9 +84,7 @@ export function AddMoneySheet({
   return (
     <BottomSheet visible={visible} title={title} onClose={close}>
       {selected === null ? (
-        <MethodList onSelect={setSelected} />
-      ) : selected === 'account' ? (
-        <AccountDetail onBack={() => setSelected(null)} />
+        <MethodList onSelect={onSelect} />
       ) : selected === 'card' ? (
         <CardTopUp onBack={() => setSelected(null)} />
       ) : (
@@ -124,61 +133,6 @@ function MethodList({ onSelect }: { onSelect: (m: Method) => void }) {
           </ThemedText>
         </Pressable>
       ))}
-    </View>
-  );
-}
-
-function AccountDetail({ onBack }: { onBack: () => void }) {
-  const theme = useTheme();
-  const { viewAddress } = useViewAddress();
-  const [copied, setCopied] = useState(false);
-
-  const onCopy = async () => {
-    if (!viewAddress) return;
-    await Clipboard.setStringAsync(viewAddress);
-    haptics.select();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  return (
-    <View style={styles.section}>
-      <ThemedText type="small" themeColor="textSecondary">
-        Receive an instant transfer from another account or platform using your
-        account number below.
-      </ThemedText>
-
-      <View
-        style={[
-          styles.addressBox,
-          { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected },
-        ]}>
-        <ThemedText type="small" selectable style={styles.address}>
-          {viewAddress ?? 'Sign in to see your account number'}
-        </ThemedText>
-      </View>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Copy account number"
-        disabled={!viewAddress}
-        onPress={onCopy}
-        style={[styles.copyBtn, { backgroundColor: ACCENT, opacity: viewAddress ? 1 : 0.5 }]}>
-        <Text style={[styles.copyText, { color: theme.onAccent }]}>
-          {copied ? 'Copied!' : 'Copy account number'}
-        </Text>
-      </Pressable>
-
-      <ThemedText type="small" themeColor="textSecondary">
-        Only digital-dollar transfers are supported. Ask the sender to
-        double-check the account number.
-      </ThemedText>
-
-      <Pressable accessibilityRole="button" onPress={onBack} style={styles.backRow}>
-        <ThemedText type="small" themeColor="textSecondary">
-          ‹ Back
-        </ThemedText>
-      </Pressable>
     </View>
   );
 }
