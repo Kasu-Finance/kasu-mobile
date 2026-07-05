@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
@@ -24,7 +24,17 @@ import { useTransactionHistory } from './use-transaction-history';
  * portfolio facade) with card purchases (via `/mobile/card/transactions`),
  * newest first. An empty feed renders an explicit empty state.
  */
-export default function ActivityScreen() {
+/**
+ * Recent activity feed. On Home it's capped (`limit`) with a "View all" that
+ * navigates to the full list; on the Activity route it shows everything.
+ */
+export default function ActivityScreen({
+  limit,
+  onViewAll,
+}: {
+  limit?: number;
+  onViewAll?: () => void;
+} = {}) {
   const theme = useTheme();
   const { viewAddress } = useViewAddress();
   const query = useTransactionHistory(viewAddress);
@@ -33,11 +43,14 @@ export default function ActivityScreen() {
   // The tapped row, surfaced in a bottom sheet. `null` = sheet closed.
   const [selected, setSelected] = useState<ActivityItem | null>(null);
 
-  const items = useMemo<ActivityItem[]>(() => {
+  const allItems = useMemo<ActivityItem[]>(() => {
     const lending = query.data ? toActivityItems(query.data) : [];
     const card = (cardQuery.data ?? []).map(cardTransactionToActivityItem);
     return [...lending, ...card].sort((a, b) => b.timestamp - a.timestamp);
   }, [query.data, cardQuery.data]);
+
+  const items = limit ? allItems.slice(0, limit) : allItems;
+  const hasMore = limit != null && allItems.length > limit;
 
   return (
     <View style={styles.container}>
@@ -67,6 +80,21 @@ export default function ActivityScreen() {
               <ActivityRow item={item} onPress={() => setSelected(item)} />
             </Fragment>
           ))}
+          {hasMore && onViewAll ? (
+            <>
+              <View
+                style={[styles.divider, { backgroundColor: theme.backgroundSelected }]}
+              />
+              <Pressable
+                accessibilityRole="button"
+                onPress={onViewAll}
+                style={styles.viewAll}>
+                <ThemedText type="smallBold" themeColor="primary">
+                  View all
+                </ThemedText>
+              </Pressable>
+            </>
+          ) : null}
         </Card>
       )}
 
@@ -116,6 +144,7 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 32 },
   divider: { height: StyleSheet.hairlineWidth },
   note: { textAlign: 'center' },
+  viewAll: { alignItems: 'center', paddingVertical: 12 },
   detail: { gap: 8 },
   detailAmount: { fontSize: 28, lineHeight: 34 },
   detailRows: { gap: 2 },

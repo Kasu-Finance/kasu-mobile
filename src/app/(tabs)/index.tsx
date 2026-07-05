@@ -150,7 +150,7 @@ export default function HomeScreen() {
 
           <Portfolio summaryOnly />
 
-          <ActivityScreen />
+          <ActivityScreen limit={5} onViewAll={() => router.push('/activity')} />
         </>
       )}
 
