@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,
+  Pressable,
   StyleSheet,
   TextInput,
   View,
@@ -20,6 +21,7 @@ import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 import { useCardOnboard } from './use-card-onboard';
 import { useCardStatus } from './use-card-status';
 import { useEnsureCardSession } from './use-card-session';
+import { useSetSpendingLimit } from './card-prefs';
 import { haptics } from '@/lib/haptics';
 import { type CardBackendStatus, type CardStatus } from './types';
 
@@ -132,6 +134,7 @@ function OnboardingCard({
   refreshing: boolean;
 }) {
   const onboard = useCardOnboard();
+  const setLimit = useSetSpendingLimit();
   const [error, setError] = useState<string | null>(null);
 
   const run = async (input: {
@@ -147,12 +150,13 @@ function OnboardingCard({
     }
   };
 
-  // Creating the card is the last step — send the user back to Home, where the
-  // card entry shows the settling/active state. Avoids stranding them on this
-  // screen after a "thinking then done" gap.
-  const handleCreate = async () => {
+  // Activation is the last step — save the chosen spending limit, create the
+  // card, then send the user back to Home (the card entry shows the settling/
+  // active state). Avoids stranding them here after a "thinking then done" gap.
+  const handleActivate = async (limit: string) => {
     setError(null);
     try {
+      await setLimit.mutateAsync({ address, limit });
       await onboard.advanceOnboarding({ userAddress: address });
       if (router.canGoBack()) router.back();
       else router.replace('/(tabs)');
@@ -207,20 +211,122 @@ function OnboardingCard({
     );
   }
 
-  // ready — finish setup by creating the card.
+  // ready — final activation: consent + spending limit, then create the card.
+  return (
+    <ActivateCard
+      pending={onboard.isPending || setLimit.isPending}
+      error={error}
+      onActivate={handleActivate}
+    />
+  );
+}
+
+const CONSENTS = [
+  'E-Sign consent',
+  'Cardholder Terms',
+  'Cashback Terms',
+  'Privacy Policy',
+];
+const LIMITS = ['1,000', '5,000', '10,000'];
+
+/**
+ * Card activation (backend `ready`) — Plasma One's activation beats: consent
+ * toggles (all required) and a monthly spending limit preset, then activate.
+ */
+function ActivateCard({
+  pending,
+  error,
+  onActivate,
+}: {
+  pending: boolean;
+  error: string | null;
+  onActivate: (limit: string) => void;
+}) {
+  const [agreed, setAgreed] = useState<Record<string, boolean>>({});
+  const [limit, setLimitChoice] = useState('5,000');
+  const allAgreed = CONSENTS.every((c) => agreed[c]);
+
   return (
     <Card style={styles.gap}>
-      <ThemedText type="smallBold">You&apos;re all set</ThemedText>
+      <ThemedText type="smallBold">Activate your card</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Create your card to start spending.
+        A couple of confirmations and you&apos;re ready to spend.
       </ThemedText>
+
+      <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+        Monthly spending limit
+      </ThemedText>
+      <View style={styles.chips}>
+        {LIMITS.map((l) => (
+          <Chip
+            key={l}
+            label={`$${l}`}
+            selected={limit === l}
+            onPress={() => setLimitChoice(l)}
+          />
+        ))}
+      </View>
+
+      <View style={styles.consents}>
+        {CONSENTS.map((c) => (
+          <ConsentRow
+            key={c}
+            label={c}
+            checked={Boolean(agreed[c])}
+            onToggle={() => setAgreed((a) => ({ ...a, [c]: !a[c] }))}
+          />
+        ))}
+      </View>
+
       {error && <ErrorText message={error} />}
       <Button
-        title="Create my card"
-        loading={onboard.isPending}
-        onPress={handleCreate}
+        title="Activate card"
+        loading={pending}
+        disabled={!allAgreed}
+        onPress={() => onActivate(limit)}
       />
     </Card>
+  );
+}
+
+/** A consent checkbox row. */
+function ConsentRow({
+  label,
+  checked,
+  onToggle,
+}: {
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      onPress={() => {
+        haptics.select();
+        onToggle();
+      }}
+      style={styles.consentRow}>
+      <View
+        style={[
+          styles.checkbox,
+          {
+            backgroundColor: checked ? theme.primary : 'transparent',
+            borderColor: checked ? theme.primary : theme.backgroundSelected,
+          },
+        ]}>
+        {checked ? (
+          <ThemedText type="small" style={{ color: theme.onAccent }}>
+            ✓
+          </ThemedText>
+        ) : null}
+      </View>
+      <ThemedText type="small" style={styles.consentLabel}>
+        I agree to the {label}
+      </ThemedText>
+    </Pressable>
   );
 }
 
@@ -280,9 +386,11 @@ function VerifyIdentityCard({
   const email =
     emailAccount && 'address' in emailAccount ? emailAccount.address : undefined;
   const [phone, setPhone] = useState('');
+  const [country, setCountry] = useState<string | null>(null);
   void address;
 
   const phoneValid = /^\+?[0-9 ]{7,}$/.test(phone.trim());
+  const canSubmit = phoneValid && country !== null;
 
   return (
     <Card style={styles.gap}>
@@ -291,6 +399,24 @@ function VerifyIdentityCard({
         One quick check with our card partner and your card is ready. It takes a
         couple of minutes.
       </ThemedText>
+
+      <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+        Country of residence
+      </ThemedText>
+      <View style={styles.chips}>
+        {COUNTRIES.map((c) => (
+          <Chip
+            key={c}
+            label={c}
+            selected={country === c}
+            onPress={() => setCountry(c)}
+          />
+        ))}
+      </View>
+      <ThemedText type="small" themeColor="textSecondary">
+        The United States isn&apos;t supported yet.
+      </ThemedText>
+
       <TextInput
         value={phone}
         onChangeText={setPhone}
@@ -308,10 +434,46 @@ function VerifyIdentityCard({
       <Button
         title={hasKycUrl ? 'Verify identity' : 'Continue'}
         loading={pending}
-        disabled={!phoneValid}
+        disabled={!canSubmit}
         onPress={() => onSubmit(email, phone.trim())}
       />
     </Card>
+  );
+}
+
+const COUNTRIES = ['Australia', 'New Zealand', 'United Kingdom', 'Other'];
+
+/** A selectable pill. */
+function Chip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => {
+        haptics.select();
+        onPress();
+      }}
+      style={[
+        styles.chip,
+        {
+          backgroundColor: selected ? theme.primary : theme.backgroundElement,
+          borderColor: selected ? theme.primary : theme.backgroundSelected,
+        },
+      ]}>
+      <ThemedText
+        type="small"
+        style={{ color: selected ? theme.onAccent : theme.text }}>
+        {label}
+      </ThemedText>
+    </Pressable>
   );
 }
 
@@ -409,6 +571,25 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center', minHeight: 80 },
   inlineLoading: { paddingVertical: 8, alignItems: 'flex-start' },
   tapHint: { textAlign: 'center' },
+  fieldLabel: { marginTop: 4 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  consents: { gap: 4, marginTop: 4 },
+  consentRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  consentLabel: { flex: 1 },
   error: { color: ERROR_COLOR },
   input: {
     height: 52,

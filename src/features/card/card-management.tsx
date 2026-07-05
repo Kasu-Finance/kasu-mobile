@@ -10,6 +10,7 @@ import { formatUnits, formatUsd } from '@/lib/format';
 import { useCardTopup } from './use-card-topup';
 import { useCardTransactions } from './use-card-transactions';
 import { useSimulatePurchase } from './use-card-demo';
+import { useSpendingLimit } from './card-prefs';
 
 const ERROR_COLOR = '#e4645a';
 
@@ -29,6 +30,7 @@ export function CardManagement({
   const topup = useCardTopup();
   const simulate = useSimulatePurchase();
   const cardTx = useCardTransactions(address);
+  const spendingLimit = useSpendingLimit(address);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +61,11 @@ export function CardManagement({
           ON YOUR CARD
         </ThemedText>
         <ThemedText type="subtitle">{cardBalance}</ThemedText>
+        {spendingLimit.data ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            Monthly limit ${spendingLimit.data}
+          </ThemedText>
+        ) : null}
       </View>
 
       <Card style={styles.gap}>
