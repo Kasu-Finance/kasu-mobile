@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { refreshFinancials } from '@/lib/refresh';
+import { recordTransfer } from '@/features/activity/transfers-store';
 import { formatUnits, formatUsd, shortAddress } from '@/lib/format';
 import { DEFAULT_CHAIN_ID } from '@/lib/web3/chains';
 import { useStableBalance } from '@/lib/web3/use-balance';
@@ -43,13 +44,17 @@ export default function DepositRoute() {
     }
     if (!received && BigInt(b) > BigInt(baseline.current)) {
       const delta = BigInt(b) - BigInt(baseline.current);
-      setReceivedAmount(formatUsd(formatUnits(delta.toString(), 6)));
+      const dollars = formatUnits(delta.toString(), 6);
+      setReceivedAmount(formatUsd(dollars));
       setReceived(true);
       haptics.success();
+      if (viewAddress) {
+        void recordTransfer(viewAddress, { kind: 'received', amount: dollars });
+      }
       // Funds arrived — reload balance, portfolio, card, activity everywhere.
       refreshFinancials();
     }
-  }, [balanceQuery.data, received]);
+  }, [balanceQuery.data, received, viewAddress]);
 
   useEffect(() => {
     const t = setInterval(() => void balanceQuery.refetch(), 8000);
