@@ -8,6 +8,7 @@ import { ActivityScreen } from '@/features/activity';
 import PaymentsScreen from '@/features/payments/payments-screen';
 import NotificationsScreen from '@/features/notifications/notifications-screen';
 import { useTheme } from '@/hooks/use-theme';
+import { queryClient } from '@/lib/query/query-client';
 
 type Seg = 'activity' | 'payments' | 'alerts';
 
@@ -34,7 +35,14 @@ export default function ActivityTab() {
           ]}
         />
       </View>
-      <Screen edges={[]}>
+      <Screen
+        edges={[]}
+        onRefresh={() =>
+          queryClient.invalidateQueries({
+            predicate: (q) =>
+              ['activity', 'mobile'].includes(q.queryKey[0] as string),
+          })
+        }>
         {seg === 'activity' ? (
           <ActivityScreen />
         ) : seg === 'payments' ? (

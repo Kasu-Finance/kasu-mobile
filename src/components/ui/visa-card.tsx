@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -35,6 +35,7 @@ export function VisaCard({
   cvc,
   variant = 'dark',
   onFlip,
+  revealing = false,
 }: {
   balance: string;
   last4?: string | null;
@@ -45,7 +46,10 @@ export function VisaCard({
   variant?: 'dark' | 'accent';
   /** Fired when the card flips; `toBack` true when revealing the details face. */
   onFlip?: (toBack: boolean) => void;
+  /** True while the real PAN is being fetched — shows a loading state on the back. */
+  revealing?: boolean;
 }) {
+  const loadingDetails = revealing && !pan;
   const shownLast4 = last4 ?? (pan ? pan.slice(-4) : '····');
   const fullPan = pan
     ? pan.replace(/(.{4})/g, '$1 ').trim()
@@ -124,18 +128,29 @@ export function VisaCard({
 
           <View style={styles.backInner}>
             <View style={styles.stripe} />
-            <Text style={[styles.fullPan, { color: '#ffffff' }]}>{fullPan}</Text>
-            <View style={styles.bottomRow}>
-              <View>
-                <Text style={[styles.backLabel, { color: 'rgba(255,255,255,0.7)' }]}>EXP</Text>
-                <Text style={[styles.backValue, { color: '#ffffff' }]}>{expiry ?? '••/••'}</Text>
+            {loadingDetails ? (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator color="#ffffff" />
+                <Text style={[styles.loadingText, { color: 'rgba(255,255,255,0.85)' }]}>
+                  Loading your details…
+                </Text>
               </View>
-              <View>
-                <Text style={[styles.backLabel, { color: 'rgba(255,255,255,0.7)' }]}>CVC</Text>
-                <Text style={[styles.backValue, { color: '#ffffff' }]}>{cvc ?? '•••'}</Text>
-              </View>
-              <Text style={[styles.visa, { color: '#ffffff' }]}>VISA</Text>
-            </View>
+            ) : (
+              <>
+                <Text style={[styles.fullPan, { color: '#ffffff' }]}>{fullPan}</Text>
+                <View style={styles.bottomRow}>
+                  <View>
+                    <Text style={[styles.backLabel, { color: 'rgba(255,255,255,0.7)' }]}>EXP</Text>
+                    <Text style={[styles.backValue, { color: '#ffffff' }]}>{expiry ?? '••/••'}</Text>
+                  </View>
+                  <View>
+                    <Text style={[styles.backLabel, { color: 'rgba(255,255,255,0.7)' }]}>CVC</Text>
+                    <Text style={[styles.backValue, { color: '#ffffff' }]}>{cvc ?? '•••'}</Text>
+                  </View>
+                  <Text style={[styles.visa, { color: '#ffffff' }]}>VISA</Text>
+                </View>
+              </>
+            )}
           </View>
         </Animated.View>
       </View>
@@ -244,6 +259,14 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'space-between',
   },
+  loadingRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  loadingText: { fontFamily: Fonts.sansMedium, fontSize: 14 },
   stripe: {
     height: 36,
     marginHorizontal: -20,

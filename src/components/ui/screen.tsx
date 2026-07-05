@@ -1,5 +1,5 @@
-import type { PropsWithChildren } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { type PropsWithChildren, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { type Edge, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -9,18 +9,50 @@ import { useTheme } from '@/hooks/use-theme';
  * `edges` controls which safe-area insets are applied (default top only). Pass
  * `edges={[]}` when an ancestor already handles the top inset (e.g. a fixed
  * header above the scroll body).
+ *
+ * Pass `onRefresh` to enable pull-to-refresh (drag down from the top). It runs
+ * the async handler and shows the spinner until it settles.
  */
 export function Screen({
   children,
   scroll = true,
   edges = ['top'],
-}: PropsWithChildren<{ scroll?: boolean; edges?: readonly Edge[] }>) {
+  onRefresh,
+}: PropsWithChildren<{
+  scroll?: boolean;
+  edges?: readonly Edge[];
+  onRefresh?: () => Promise<unknown> | void;
+}>) {
   const theme = useTheme();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+    setRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const Body = <View style={styles.body}>{children}</View>;
   return (
     <SafeAreaView style={[styles.flex, { backgroundColor: theme.background }]} edges={edges}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={theme.primary}
+                colors={[theme.primary]}
+              />
+            ) : undefined
+          }>
           {children}
         </ScrollView>
       ) : (

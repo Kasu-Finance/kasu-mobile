@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { Screen } from '@/components/ui/screen';
 
+import { queryClient } from '@/lib/query/query-client';
+
 import { EarnHeader } from './earn-header';
 import { StrategiesList } from './strategies-list';
+import { lendingKeys } from './use-strategies';
 import { Withdraw } from './withdraw';
 
 type FlowView =
@@ -39,7 +42,10 @@ export default function LendingScreen() {
   }
 
   return (
-    <Screen>
+    <Screen
+      onRefresh={() =>
+        queryClient.invalidateQueries({ queryKey: lendingKeys.all })
+      }>
       <ThemedText type="subtitle">Earn</ThemedText>
       <EarnHeader />
       <StrategiesList onSelect={(strategy) => router.push(`/lending/${strategy.id}`)} />
