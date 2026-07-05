@@ -56,16 +56,16 @@ export default function HomeScreen() {
   // Fund + seed a realistic history the first time the card is active.
   useSeedDemoCard(viewAddress, card.isActive, cardTx.data?.length ?? 0, cardTx.isLoading);
 
-  const walletBalance =
-    balanceQuery.isLoading || balanceQuery.data == null
-      ? '—'
-      : `$${formatUnits(balanceQuery.data, chain.stableAsset.decimals)}`;
-
-  // Single balance on the card: the card's spendable balance once it exists,
-  // otherwise the account balance. No duplicate balance block below.
-  const cardBalance =
-    card.balance != null ? formatUsd(formatUnits(card.balance, 6)) : null;
-  const displayBalance = card.isActive && cardBalance ? cardBalance : walletBalance;
+  // Unified balance: money in the wallet + money loaded on the card are both
+  // the user's (two pockets, one number). A deposit lands in the wallet, a card
+  // top-up moves it to the card — either way the total on the card face is the
+  // same. Both are 6-decimal USDC base units.
+  const walletRaw = balanceQuery.data ? BigInt(balanceQuery.data) : 0n;
+  const cardRaw = card.balance ? BigInt(card.balance) : 0n;
+  const balanceKnown = balanceQuery.data != null || card.balance != null;
+  const displayBalance = balanceKnown
+    ? formatUsd(formatUnits((walletRaw + cardRaw).toString(), chain.stableAsset.decimals))
+    : '—';
 
   const showManagement = flipped && card.isActive;
 

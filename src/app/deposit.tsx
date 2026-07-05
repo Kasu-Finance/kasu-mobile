@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { refreshFinancials } from '@/lib/refresh';
-import { shortAddress } from '@/lib/format';
+import { formatUnits, formatUsd, shortAddress } from '@/lib/format';
 import { DEFAULT_CHAIN_ID } from '@/lib/web3/chains';
 import { useStableBalance } from '@/lib/web3/use-balance';
 import { useViewAddress } from '@/lib/web3/use-view-address';
@@ -29,9 +29,10 @@ export default function DepositRoute() {
   const balanceQuery = useStableBalance(viewAddress, DEFAULT_CHAIN_ID);
   const [copied, setCopied] = useState(false);
   const [received, setReceived] = useState(false);
+  const [receivedAmount, setReceivedAmount] = useState<string | null>(null);
 
-  // Watch for an incoming transfer: poll the balance; flip to "received" when
-  // it rises above what it was when the screen opened.
+  // Watch for an incoming transfer: poll the balance; celebrate when it rises
+  // above what it was when the screen opened.
   const baseline = useRef<string | null>(null);
   useEffect(() => {
     const b = balanceQuery.data;
@@ -41,6 +42,8 @@ export default function DepositRoute() {
       return;
     }
     if (!received && BigInt(b) > BigInt(baseline.current)) {
+      const delta = BigInt(b) - BigInt(baseline.current);
+      setReceivedAmount(formatUsd(formatUnits(delta.toString(), 6)));
       setReceived(true);
       haptics.success();
       // Funds arrived — reload balance, portfolio, card, activity everywhere.
@@ -80,11 +83,33 @@ export default function DepositRoute() {
         />
       </View>
 
+      {received ? (
+        <View style={styles.successBody}>
+          <View style={[styles.successCircle, { backgroundColor: theme.primary }]}>
+            <ThemedText style={[styles.successCheck, { color: theme.onAccent }]}>
+              ✓
+            </ThemedText>
+          </View>
+          <ThemedText type="title" style={styles.center}>
+            {receivedAmount ?? ''}
+          </ThemedText>
+          <ThemedText type="subtitle" style={styles.center}>
+            Money received
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
+            It’s in your balance now.
+          </ThemedText>
+          <Button
+            title="Done"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+            style={styles.doneBtn}
+          />
+        </View>
+      ) : (
       <View style={styles.body}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-          {received
-            ? 'Money received — it’s in your balance now.'
-            : 'Send money to this account number and it’ll appear in your balance automatically.'}
+          Send money to this account number and it’ll appear in your balance
+          automatically.
         </ThemedText>
 
         <View style={styles.qrWrap}>
@@ -130,6 +155,7 @@ export default function DepositRoute() {
           <Button title={copied ? 'Copied!' : 'Copy'} onPress={onCopy} style={styles.actionBtn} />
         </View>
       </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -157,6 +183,17 @@ const styles = StyleSheet.create({
   close: { paddingHorizontal: 0 },
   body: { flex: 1, padding: 20, gap: 20 },
   center: { textAlign: 'center' },
+  successBody: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 24 },
+  successCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  successCheck: { fontSize: 52, lineHeight: 58, fontWeight: '700' },
+  doneBtn: { alignSelf: 'stretch', marginTop: 20 },
   qrWrap: { alignItems: 'center' },
   qrCard: {
     backgroundColor: '#ffffff',
