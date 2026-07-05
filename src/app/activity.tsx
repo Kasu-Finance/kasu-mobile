@@ -5,18 +5,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '@/components/ui/screen';
 import { Segmented } from '@/components/ui/segmented';
 import { ActivityScreen } from '@/features/activity';
-import PaymentsScreen from '@/features/payments/payments-screen';
 import NotificationsScreen from '@/features/notifications/notifications-screen';
 import { useTheme } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query/query-client';
 
-type Seg = 'activity' | 'payments' | 'alerts';
+type Seg = 'activity' | 'alerts';
 
 /**
- * Activity tab — the "Recent activity" feed (deposits/yield/withdrawals),
- * P2P payments (F4), and the notification feed (F5). The segmented switcher is
- * pinned above the scrolling body, so it carries the top safe-area inset itself
- * (the body `Screen` opts out with `edges={[]}` to avoid a double inset).
+ * Activity tab — the "Recent activity" feed (deposits/yield/withdrawals/
+ * transfers) and the notification feed (F5). Send lives on Home; receiving is
+ * the deposit screen. The segmented switcher is pinned above the scrolling body
+ * and carries the top safe-area inset itself (the body `Screen` opts out with
+ * `edges={[]}` to avoid a double inset).
  */
 export default function ActivityTab() {
   const theme = useTheme();
@@ -30,7 +30,6 @@ export default function ActivityTab() {
           onChange={(k) => setSeg(k as Seg)}
           options={[
             { key: 'activity', label: 'Activity' },
-            { key: 'payments', label: 'Payments' },
             { key: 'alerts', label: 'Alerts' },
           ]}
         />
@@ -43,13 +42,7 @@ export default function ActivityTab() {
               ['activity', 'mobile'].includes(q.queryKey[0] as string),
           })
         }>
-        {seg === 'activity' ? (
-          <ActivityScreen />
-        ) : seg === 'payments' ? (
-          <PaymentsScreen />
-        ) : (
-          <NotificationsScreen />
-        )}
+        {seg === 'activity' ? <ActivityScreen /> : <NotificationsScreen />}
       </Screen>
     </View>
   );
