@@ -12,6 +12,7 @@ export { CardOnboardWebView } from './card-onboard-webview';
 export type { CardOnboardWebViewProps } from './card-onboard-webview';
 
 export { useCardStatus } from './use-card-status';
+export { useEnsureCardSession } from './use-card-session';
 export { useCardOnboard, type OnboardStep } from './use-card-onboard';
 export { useCardTopup } from './use-card-topup';
 export { useCardTransactions } from './use-card-transactions';

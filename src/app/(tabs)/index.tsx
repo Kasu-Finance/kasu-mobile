@@ -11,6 +11,7 @@ import {
   useCardStatus,
   useCardPanReveal,
   useCardTransactions,
+  useEnsureCardSession,
   useSeedDemoCard,
   type RevealedCard,
 } from '@/features/card';
@@ -46,6 +47,11 @@ export default function HomeScreen() {
   const cardTx = useCardTransactions(viewAddress);
   const reveal = useCardPanReveal();
   const [revealed, setRevealed] = useState<RevealedCard | null>(null);
+
+  // The Immersve session is in-memory on the backend and is cleared on every
+  // deploy — re-establish it silently from Home so an existing card reappears
+  // (embedded wallet signs the challenge with no user step).
+  useEnsureCardSession(viewAddress, card.backendStatus);
 
   // Fund + seed a realistic history the first time the card is active.
   useSeedDemoCard(viewAddress, card.isActive, cardTx.data?.length ?? 0, cardTx.isLoading);
