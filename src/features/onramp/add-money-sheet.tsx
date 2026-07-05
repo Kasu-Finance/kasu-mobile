@@ -4,12 +4,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 
 import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { useTheme } from '@/hooks/use-theme';
 import { useViewAddress } from '@/lib/web3/use-view-address';
 import { haptics } from '@/lib/haptics';
 
 import { BottomSheet } from './sheet';
+import { openMoonPayBuy } from './moonpay';
 
 /**
  * "Add funds" sheet — Plasma One-style "Add Cash": a list of funding methods
@@ -41,8 +43,7 @@ const METHODS: {
     key: 'card',
     icon: 'creditcard.fill',
     label: 'Debit card',
-    sub: 'Instant',
-    soon: true,
+    sub: 'Instant · card or Apple Pay',
   },
   {
     key: 'account',
@@ -75,6 +76,8 @@ export function AddMoneySheet({
         <MethodList onSelect={setSelected} />
       ) : selected === 'account' ? (
         <AccountDetail onBack={() => setSelected(null)} />
+      ) : selected === 'card' ? (
+        <CardTopUp onBack={() => setSelected(null)} />
       ) : (
         <ComingSoon method={current!} onBack={() => setSelected(null)} />
       )}
@@ -171,6 +174,39 @@ function AccountDetail({ onBack }: { onBack: () => void }) {
         double-check the account number.
       </ThemedText>
 
+      <Pressable accessibilityRole="button" onPress={onBack} style={styles.backRow}>
+        <ThemedText type="small" themeColor="textSecondary">
+          ‹ Back
+        </ThemedText>
+      </Pressable>
+    </View>
+  );
+}
+
+function CardTopUp({ onBack }: { onBack: () => void }) {
+  const { viewAddress } = useViewAddress();
+  const [busy, setBusy] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
+
+  const launch = async () => {
+    if (!viewAddress) return;
+    setBusy(true);
+    haptics.tap();
+    const result = await openMoonPayBuy(viewAddress);
+    setBusy(false);
+    if (result === 'unavailable') setUnavailable(true);
+  };
+
+  return (
+    <View style={styles.section}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {unavailable
+          ? 'Card top-ups are coming soon. In the meantime you can add money instantly from another account.'
+          : 'Add money instantly with a debit card or Apple Pay. Payment is completed securely with our partner, MoonPay.'}
+      </ThemedText>
+      {!unavailable ? (
+        <Button title="Add with card or Apple Pay" loading={busy} onPress={launch} />
+      ) : null}
       <Pressable accessibilityRole="button" onPress={onBack} style={styles.backRow}>
         <ThemedText type="small" themeColor="textSecondary">
           ‹ Back
