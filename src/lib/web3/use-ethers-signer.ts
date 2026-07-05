@@ -5,10 +5,14 @@ import { useEffect, useState } from 'react';
 /**
  * Builds an ethers v5 signer from the user's Privy embedded wallet.
  *
- * The embedded wallet's EIP-1193 provider (`wallet.getProvider()`) routes
- * `eth_sendTransaction` through Privy, which applies any configured gas-
- * sponsorship policy automatically — so no bespoke `SponsoredSigner` is needed
- * on Expo (unlike the web app). The Kasu SDK consumes this signer directly.
+ * The embedded wallet's EIP-1193 provider (`wallet.getProvider()`) signs
+ * `eth_sendTransaction` on-device and broadcasts it — a self-paid EOA tx.
+ * NOTE: Privy's Expo SDK does NOT sponsor EOA gas (sponsorship there is
+ * smart-wallets only; the web app's `sendTransaction({sponsor:true})` relay is
+ * not exposed on Expo). So txns need ETH in the wallet until we add a gas tank
+ * / EIP-3009 relayer (see plan §8, deferred). Also: Privy reads `gasLimit`
+ * (not the JSON-RPC `gas` field) — callers must pass `gasLimit`. The Kasu SDK
+ * consumes this signer directly.
  */
 export function useEthersSigner(): {
   signer: ethers.providers.JsonRpcSigner | null;
