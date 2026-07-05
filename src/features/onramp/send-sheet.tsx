@@ -10,8 +10,9 @@ import { ACCENT } from '@/components/ui/theme-extras';
 import { useTheme } from '@/hooks/use-theme';
 import { formatUnits, parseUnits, shortAddress } from '@/lib/format';
 import { DEFAULT_CHAIN_ID, getChain } from '@/lib/web3/chains';
+import { useEmbeddedEthereumWallet } from '@privy-io/expo';
+
 import { useStableBalance } from '@/lib/web3/use-balance';
-import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
 import { haptics } from '@/lib/haptics';
 import { refreshFinancials } from '@/lib/refresh';
 
@@ -51,8 +52,11 @@ export function SendSheet({
   onClose: () => void;
 }) {
   const theme = useTheme();
-  const { signer, address } = useEthersSigner();
-  const asset = getChain(DEFAULT_CHAIN_ID).stableAsset;
+  const { wallets } = useEmbeddedEthereumWallet();
+  const wallet = wallets[0];
+  const address = wallet?.address ?? null;
+  const chain = getChain(DEFAULT_CHAIN_ID);
+  const asset = chain.stableAsset;
   const balanceQuery = useStableBalance(address, DEFAULT_CHAIN_ID);
 
   const [step, setStep] = useState<Step>('recipient');
@@ -89,23 +93,37 @@ export function SendSheet({
   ];
 
   async function send() {
-    if (!signer || !address) {
+    if (!wallet || !address) {
       setError('Please sign in and try again.');
       setStep('error');
       return;
     }
     setStep('sending');
     try {
-      const usdc = new ethers.Contract(asset.address, ERC20_ABI, signer);
       const value = parseUnits(amount, asset.decimals);
+      const rpc = new ethers.providers.JsonRpcProvider(chain.rpcUrl, DEFAULT_CHAIN_ID);
+      const usdc = new ethers.Contract(asset.address, ERC20_ABI, rpc);
       const balance: ethers.BigNumber = await usdc.balanceOf(address);
       if (balance.lt(value)) {
         setError(`Not enough funds. You have $${formatUnits(balance, asset.decimals)}.`);
         setStep('error');
         return;
       }
-      const tx = await usdc.transfer(trimmedTo, value);
-      await tx.wait();
+
+      // Send through Privy's provider (NOT ethers pre-signing): Privy estimates
+      // gas correctly and applies the sponsorship policy. Pre-populating gas via
+      // ethers caused "intrinsic gas too low" and bypassed sponsorship.
+      const data = new ethers.utils.Interface(ERC20_ABI).encodeFunctionData(
+        'transfer',
+        [trimmedTo, value],
+      );
+      const provider = await wallet.getProvider();
+      const txHash = (await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: address, to: asset.address, data }],
+      })) as string;
+
+      await rpc.waitForTransaction(txHash);
       haptics.success();
       refreshFinancials();
       setStep('sent');
