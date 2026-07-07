@@ -1,7 +1,9 @@
 import { usePrivy } from '@privy-io/expo';
+import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { useState, type ReactNode } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -9,26 +11,37 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { ACCENT } from '@/components/ui/theme-extras';
-import { Avatar } from '@/features/profile/avatar';
 import { useIdentity } from '@/features/profile/use-identity';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import { shortAddress } from '@/lib/format';
 
-const SUPPORT_EMAIL = 'support@kasu.finance';
-const TERMS_URL = 'https://kasu.finance/terms';
-const PRIVACY_URL = 'https://kasu.finance/privacy';
+const SUPPORT_EMAIL = 'hello@kasu.finance';
+const TERMS_URL =
+  'https://docs.kasu.finance/legal-notices/platform-access-and-use-terms-of-use';
+const PRIVACY_URL = 'https://docs.kasu.finance/legal-notices/privacy-policy';
+const IMPORTANT_INFO_URL =
+  'https://docs.kasu.finance/important-information-when-lending/important-information';
 
 /**
- * Profile — Plasma One-style: initial avatar, membership + "since", a settings
- * menu, an about card, and sign out. Real where we can be (account details,
- * support, legal links, version); honest "coming soon" where a feature isn't
- * built yet. Zero crypto vocabulary.
+ * Profile — account details inline (no avatar), a settings menu, legal links,
+ * and sign out. Real where we can be (account details, support, legal, version),
+ * honest "Soon" where a feature isn't built. Zero crypto vocabulary.
  */
 export default function ProfileScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { user, logout } = usePrivy();
   const identity = useIdentity();
+  const [copied, setCopied] = useState(false);
+
+  const copyAccount = async () => {
+    if (!identity.address) return;
+    await Clipboard.setStringAsync(identity.address);
+    haptics.select();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   async function handleSignOut() {
     try {
@@ -49,44 +62,56 @@ export default function ProfileScreen() {
           style={[styles.backBtn, { backgroundColor: theme.backgroundElement }]}>
           <SymbolView name="chevron.left" size={18} tintColor={theme.text} />
         </Pressable>
+        <ThemedText type="subtitle">Profile</ThemedText>
+        <View style={styles.backBtn} />
       </View>
 
-      {/* Identity */}
-      <View style={styles.identity}>
-        <View>
-          <Avatar initial={identity.initial} size={96} />
-          <View style={[styles.editBadge, { backgroundColor: theme.background }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Edit profile"
-              onPress={() => router.push('/account')}
-              style={[styles.editInner, { backgroundColor: theme.backgroundElement }]}>
-              <SymbolView name="pencil" size={14} tintColor={theme.text} />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={[styles.chip, { backgroundColor: theme.backgroundElement }]}>
-          <ThemedText type="smallBold">
-            {identity.isVerified ? 'Verified member' : 'Kasu member'}
-          </ThemedText>
-        </View>
-        {identity.memberSince ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            Since {identity.memberSince}
-          </ThemedText>
-        ) : null}
-      </View>
-
-      {/* Settings menu */}
-      <Card style={styles.menu}>
-        <MenuRow
-          icon="person.fill"
-          title="Account"
-          subtitle="Your account details"
-          onPress={() => router.push('/account')}
-        />
+      {/* Account details */}
+      <Card style={styles.card}>
+        <Field label="Name" value={identity.name} />
         <Divider />
+        <Field label="Email" value={identity.email || '—'} />
+        <Divider />
+        <Pressable accessibilityRole="button" onPress={copyAccount} style={styles.fieldRow}>
+          <ThemedText type="small" themeColor="textSecondary">
+            Account number
+          </ThemedText>
+          <View style={styles.copyValue}>
+            <ThemedText type="smallBold">
+              {identity.address ? shortAddress(identity.address, 6, 6) : '—'}
+            </ThemedText>
+            <SymbolView
+              name={copied ? 'checkmark' : 'doc.on.doc'}
+              size={14}
+              tintColor={theme.textSecondary}
+            />
+          </View>
+        </Pressable>
+        <Divider />
+        <Field
+          label="Identity"
+          value={
+            identity.isVerified ? (
+              <Badge text="Verified" />
+            ) : (
+              <Pressable accessibilityRole="button" onPress={() => router.push('/card-kyc')}>
+                <ThemedText type="smallBold" themeColor="primary">
+                  Verify now
+                </ThemedText>
+              </Pressable>
+            )
+          }
+        />
+        {identity.memberSince ? (
+          <>
+            <Divider />
+            <Field label="Member since" value={identity.memberSince} />
+          </>
+        ) : null}
+      </Card>
+
+      {/* Settings */}
+      <Card style={styles.card}>
         <MenuRow
           icon="lock.fill"
           title="Security"
@@ -114,11 +139,11 @@ export default function ProfileScreen() {
         />
       </Card>
 
-      {/* About */}
-      <Card style={styles.menu}>
+      {/* Legal */}
+      <Card style={styles.card}>
         <MenuRow
           icon="doc.text.fill"
-          title="Terms of Service"
+          title="Terms of Use"
           onPress={() => Linking.openURL(TERMS_URL).catch(() => {})}
         />
         <Divider />
@@ -128,7 +153,13 @@ export default function ProfileScreen() {
           onPress={() => Linking.openURL(PRIVACY_URL).catch(() => {})}
         />
         <Divider />
-        <View style={styles.versionRow}>
+        <MenuRow
+          icon="info.circle.fill"
+          title="Important Information"
+          onPress={() => Linking.openURL(IMPORTANT_INFO_URL).catch(() => {})}
+        />
+        <Divider />
+        <View style={styles.fieldRow}>
           <ThemedText type="small" themeColor="textSecondary">
             Version
           </ThemedText>
@@ -140,6 +171,23 @@ export default function ProfileScreen() {
 
       <Button title="Sign out" variant="ghost" onPress={handleSignOut} style={styles.signOut} />
     </Screen>
+  );
+}
+
+function Field({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <View style={styles.fieldRow}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+      {typeof value === 'string' ? (
+        <ThemedText type="smallBold" numberOfLines={1} style={styles.fieldValue}>
+          {value}
+        </ThemedText>
+      ) : (
+        value
+      )}
+    </View>
   );
 }
 
@@ -167,9 +215,9 @@ function MenuRow({
         }
         onPress?.();
       }}
-      style={styles.row}>
-      <SymbolView name={icon} size={22} tintColor={ACCENT} style={styles.rowIcon} />
-      <View style={styles.rowText}>
+      style={styles.menuRow}>
+      <SymbolView name={icon} size={22} tintColor={ACCENT} style={styles.menuIcon} />
+      <View style={styles.menuText}>
         <ThemedText type="smallBold">{title}</ThemedText>
         {subtitle ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -188,13 +236,28 @@ function MenuRow({
   );
 }
 
+function Badge({ text }: { text: string }) {
+  return (
+    <View style={styles.badge}>
+      <View style={styles.badgeDot} />
+      <ThemedText type="small" style={styles.badgeText}>
+        {text}
+      </ThemedText>
+    </View>
+  );
+}
+
 function Divider() {
   const theme = useTheme();
   return <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />;
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   backBtn: {
     width: 40,
     height: 40,
@@ -202,44 +265,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  identity: { alignItems: 'center', gap: 10, paddingTop: 8, paddingBottom: 8 },
-  editBadge: {
-    position: 'absolute',
-    right: -2,
-    top: -2,
-    padding: 3,
-    borderRadius: 16,
-  },
-  editInner: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chip: {
+  card: { paddingVertical: 4, gap: 0 },
+  fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    marginTop: 6,
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    gap: 12,
   },
-  menu: { paddingVertical: 4, gap: 0 },
-  row: {
+  fieldValue: { flexShrink: 1, textAlign: 'right' },
+  copyValue: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
     gap: 14,
   },
-  rowIcon: { width: 26, textAlign: 'center' },
-  rowText: { flex: 1, gap: 1 },
-  versionRow: {
+  menuIcon: { width: 26, textAlign: 'center' },
+  menuText: { flex: 1, gap: 1 },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
+    gap: 6,
+    backgroundColor: 'rgba(132,164,95,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
   },
+  badgeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#84a45f' },
+  badgeText: { color: '#84a45f', fontWeight: '700' },
   divider: { height: StyleSheet.hairlineWidth },
   signOut: { marginTop: 4 },
 });

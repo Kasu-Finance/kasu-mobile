@@ -21,10 +21,28 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-function monthYear(value: string | number | undefined): string | null {
+/**
+ * Format an account-creation timestamp as "June 2026". Privy's `created_at`
+ * comes through as a Unix value in **seconds** (so `new Date(secs)` reads it as
+ * ms → 1970); normalise seconds→ms, accept ISO strings / Date too, and guard
+ * bogus pre-2000 values (return null so "Since …" simply hides).
+ */
+function monthYear(value: unknown): string | null {
   if (value == null) return null;
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
+  let ms: number | null = null;
+  if (value instanceof Date) ms = value.getTime();
+  else if (typeof value === 'number') ms = value < 1e12 ? value * 1000 : value;
+  else if (typeof value === 'string') {
+    if (/^\d+$/.test(value)) {
+      const n = Number(value);
+      ms = n < 1e12 ? n * 1000 : n;
+    } else {
+      ms = Date.parse(value);
+    }
+  }
+  if (ms == null || Number.isNaN(ms)) return null;
+  const d = new Date(ms);
+  if (d.getFullYear() < 2000) return null;
   return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
@@ -64,7 +82,7 @@ export function useIdentity(): Identity {
   const name = fullName || (email ? email.split('@')[0] : 'Kasu member');
   const initial = avatarInitial(fullName, email, viewAddress);
   const memberSince = monthYear(
-    (user as { created_at?: string } | null)?.created_at,
+    (user as { created_at?: unknown } | null)?.created_at,
   );
 
   return {
