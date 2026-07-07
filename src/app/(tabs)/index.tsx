@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,9 @@ import {
   type RevealedCard,
 } from '@/features/card';
 import { Screen } from '@/components/ui/screen';
-import { ACCENT } from '@/components/ui/theme-extras';
 import { VisaCard } from '@/components/ui/visa-card';
+import { Avatar } from '@/features/profile/avatar';
+import { useIdentity } from '@/features/profile/use-identity';
 import { EpochYield } from '@/features/lending/epoch-yield';
 import { Portfolio } from '@/features/lending/portfolio';
 import { AddMoneySheet } from '@/features/onramp/add-money-sheet';
@@ -38,6 +39,7 @@ type Sheet = 'add' | 'send' | null;
 export default function HomeScreen() {
   const router = useRouter();
   const { viewAddress } = useViewAddress();
+  const identity = useIdentity();
   const chain = getChain(DEFAULT_CHAIN_ID);
   const balanceQuery = useStableBalance(viewAddress, DEFAULT_CHAIN_ID);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -102,10 +104,9 @@ export default function HomeScreen() {
         <ThemedText type="subtitle">Home</ThemedText>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Profile"
-          onPress={() => router.push('/profile')}
-          style={[styles.avatar, { backgroundColor: ACCENT }]}>
-          <Text style={styles.avatarGlyph}>◉</Text>
+          accessibilityLabel="Account and settings"
+          onPress={() => router.push('/profile')}>
+          <Avatar initial={identity.initial} size={40} />
         </Pressable>
       </View>
 
@@ -163,14 +164,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   tapHint: { textAlign: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarGlyph: { fontSize: 16, color: '#241a0c' },
   actions: {
     flexDirection: 'row',
     gap: 12,

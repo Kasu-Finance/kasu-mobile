@@ -26,6 +26,8 @@ export interface KycStatusResult {
   status: KycStatus;
   canRetry: boolean;
   email?: string | null;
+  /** KYC-verified legal name, once the user has passed KYC (else null). */
+  fullName?: string | null;
 }
 
 /** Statuses that should let the user re-attempt verification. */
@@ -65,6 +67,7 @@ async function fetchKycStatus(userAddress: string): Promise<KycStatusResult> {
       status,
       canRetry: data.canRetry ?? RETRY_STATUSES.has(status),
       email: data.email ?? null,
+      fullName: data.fullName ?? null,
     };
   } catch (err) {
     // 501 (not implemented yet), timeout, network — all degrade to "no status".
@@ -96,6 +99,7 @@ export function useKycStatus(address?: string | null) {
     result,
     status,
     email: result?.email ?? null,
+    fullName: result?.fullName ?? null,
     canRetry: result?.canRetry ?? true,
     isVerified: isKycVerified(status),
     isLoading: query.isLoading,

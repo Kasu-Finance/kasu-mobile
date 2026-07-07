@@ -1,222 +1,245 @@
 import { usePrivy } from '@privy-io/expo';
-import { Image } from 'expo-image';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { ACCENT } from '@/components/ui/theme-extras';
+import { Avatar } from '@/features/profile/avatar';
+import { useIdentity } from '@/features/profile/use-identity';
 import { useTheme } from '@/hooks/use-theme';
-import { shortAddress } from '@/lib/format';
-import { useViewAddress } from '@/lib/web3/use-view-address';
+import { haptics } from '@/lib/haptics';
+
+const SUPPORT_EMAIL = 'support@kasu.finance';
+const TERMS_URL = 'https://kasu.finance/terms';
+const PRIVACY_URL = 'https://kasu.finance/privacy';
 
 /**
- * Profile: identity header, wallet/KYC/chain summary, settings rows, sign out.
- *
- * The identity comes from the logged-in Privy user; the wallet address from
- * `useViewAddress`.
+ * Profile — Plasma One-style: initial avatar, membership + "since", a settings
+ * menu, an about card, and sign out. Real where we can be (account details,
+ * support, legal links, version); honest "coming soon" where a feature isn't
+ * built yet. Zero crypto vocabulary.
  */
 export default function ProfileScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { user, logout } = usePrivy();
-  const { viewAddress } = useViewAddress();
-
-  const email =
-    user?.linked_accounts?.find((a) => a.type === 'email')?.address ?? '';
-  const name = email ? email.split('@')[0] : 'Kasu member';
-  const [avatarFailed, setAvatarFailed] = useState(false);
-  const initials = name
-    .split(' ')
-    .map((p) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const identity = useIdentity();
 
   async function handleSignOut() {
     try {
       if (user) await logout();
     } catch {
-      // Ignore — we sign out of the UI regardless.
+      // Ignore — sign out of the UI regardless.
     }
     router.replace('/(auth)/welcome');
   }
 
   return (
     <Screen>
-      {/* Identity header */}
-      <View style={styles.headerRow}>
-        {avatarFailed ? (
-          <View style={[styles.avatar, { backgroundColor: ACCENT }]}>
-            <Text style={styles.avatarText}>{initials || 'U'}</Text>
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          style={[styles.backBtn, { backgroundColor: theme.backgroundElement }]}>
+          <SymbolView name="chevron.left" size={18} tintColor={theme.text} />
+        </Pressable>
+      </View>
+
+      {/* Identity */}
+      <View style={styles.identity}>
+        <View>
+          <Avatar initial={identity.initial} size={96} />
+          <View style={[styles.editBadge, { backgroundColor: theme.background }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
+              onPress={() => router.push('/account')}
+              style={[styles.editInner, { backgroundColor: theme.backgroundElement }]}>
+              <SymbolView name="pencil" size={14} tintColor={theme.text} />
+            </Pressable>
           </View>
-        ) : (
-          <Image
-            source={{ uri: 'https://github.com/kivanov82.png' }}
-            style={styles.avatar}
-            contentFit="cover"
-            onError={() => setAvatarFailed(true)}
-            accessibilityLabel={`${name} avatar`}
-          />
-        )}
-        <View style={styles.identity}>
-          <ThemedText type="subtitle" numberOfLines={1}>
-            {name}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-            {email}
+        </View>
+
+        <View style={[styles.chip, { backgroundColor: theme.backgroundElement }]}>
+          <ThemedText type="smallBold">
+            {identity.isVerified ? 'Verified member' : 'Kasu member'}
           </ThemedText>
         </View>
+        {identity.memberSince ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            Since {identity.memberSince}
+          </ThemedText>
+        ) : null}
       </View>
 
-      {/* Account summary */}
-      <Card style={styles.summaryCard}>
-        <SummaryRow
-          label="Account"
-          value={viewAddress ? shortAddress(viewAddress, 8, 6) : '—'}
+      {/* Settings menu */}
+      <Card style={styles.menu}>
+        <MenuRow
+          icon="person.fill"
+          title="Account"
+          subtitle="Your account details"
+          onPress={() => router.push('/account')}
         />
         <Divider />
-        <SummaryRow
-          label="Identity (KYC)"
-          value={<VerifiedBadge />}
+        <MenuRow
+          icon="lock.fill"
+          title="Security"
+          subtitle="Additional security for your account"
+          soon
         />
         <Divider />
+        <MenuRow
+          icon="bell.fill"
+          title="Notifications"
+          subtitle="Control how you receive updates"
+          soon
+        />
+        <Divider />
+        <MenuRow
+          icon="questionmark.circle.fill"
+          title="Get help"
+          subtitle="Get your questions answered"
+          onPress={() => {
+            haptics.tap();
+            Linking.openURL(
+              `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Kasu app support')}`,
+            ).catch(() => {});
+          }}
+        />
       </Card>
 
-      {/* Settings */}
-      <View style={styles.section}>
-        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
-          SETTINGS
-        </ThemedText>
-        <Card style={styles.settingsCard}>
-          <SettingRow label="Notifications" />
-          <Divider />
-          <SettingRow label="Security" />
-          <Divider />
-          <SettingRow label="Support" />
-          <Divider />
-          <SettingRow label="About" />
-        </Card>
-      </View>
+      {/* About */}
+      <Card style={styles.menu}>
+        <MenuRow
+          icon="doc.text.fill"
+          title="Terms of Service"
+          onPress={() => Linking.openURL(TERMS_URL).catch(() => {})}
+        />
+        <Divider />
+        <MenuRow
+          icon="hand.raised.fill"
+          title="Privacy Policy"
+          onPress={() => Linking.openURL(PRIVACY_URL).catch(() => {})}
+        />
+        <Divider />
+        <View style={styles.versionRow}>
+          <ThemedText type="small" themeColor="textSecondary">
+            Version
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {Constants.expoConfig?.version ?? '1.0.0'}
+          </ThemedText>
+        </View>
+      </Card>
 
-      <Button
-        title="Sign out"
-        variant="ghost"
-        onPress={handleSignOut}
-        style={styles.signOut}
-      />
+      <Button title="Sign out" variant="ghost" onPress={handleSignOut} style={styles.signOut} />
     </Screen>
   );
 }
 
-function SummaryRow({
-  label,
-  value,
+function MenuRow({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  soon,
 }: {
-  label: string;
-  value: ReactNode;
+  icon: SymbolViewProps['name'];
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+  soon?: boolean;
 }) {
-  return (
-    <View style={styles.summaryRow}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-      {typeof value === 'string' ? (
-        <ThemedText type="smallBold">{value}</ThemedText>
-      ) : (
-        value
-      )}
-    </View>
-  );
-}
-
-function VerifiedBadge() {
-  return (
-    <View style={styles.badge}>
-      <View style={styles.badgeDot} />
-      <Text style={styles.badgeText}>Verified</Text>
-    </View>
-  );
-}
-
-/** A tappable settings row with a trailing chevron. Non-functional for now. */
-function SettingRow({ label }: { label: string }) {
   const theme = useTheme();
-  const [hint, setHint] = useState(false);
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => setHint(true)}
-      style={styles.settingRow}>
-      <ThemedText type="small">{label}</ThemedText>
-      <View style={styles.settingRight}>
-        {hint ? (
+      onPress={() => {
+        if (soon) {
+          haptics.tap();
+          return;
+        }
+        onPress?.();
+      }}
+      style={styles.row}>
+      <SymbolView name={icon} size={22} tintColor={ACCENT} style={styles.rowIcon} />
+      <View style={styles.rowText}>
+        <ThemedText type="smallBold">{title}</ThemedText>
+        {subtitle ? (
           <ThemedText type="small" themeColor="textSecondary">
-            Coming soon
+            {subtitle}
           </ThemedText>
         ) : null}
-        <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
       </View>
+      {soon ? (
+        <ThemedText type="small" themeColor="textSecondary">
+          Soon
+        </ThemedText>
+      ) : (
+        <SymbolView name="chevron.right" size={16} tintColor={theme.textSecondary} />
+      )}
     </Pressable>
   );
 }
 
 function Divider() {
   const theme = useTheme();
-  return (
-    <View
-      style={[styles.divider, { backgroundColor: theme.backgroundSelected }]}
-    />
-  );
+  return <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />;
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  header: { flexDirection: 'row' },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#241a0c', fontSize: 24, fontWeight: '700' },
-  identity: { flex: 1, gap: 2 },
-
-  summaryCard: { paddingVertical: 4, gap: 0 },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    gap: 12,
+  identity: { alignItems: 'center', gap: 10, paddingTop: 8, paddingBottom: 8 },
+  editBadge: {
+    position: 'absolute',
+    right: -2,
+    top: -2,
+    padding: 3,
+    borderRadius: 16,
   },
-
-  badge: {
+  editInner: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(132,164,95,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 999,
+    marginTop: 6,
   },
-  badgeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#84a45f' },
-  badgeText: { color: '#84a45f', fontSize: 13, fontWeight: '700' },
-
-  section: { gap: 8 },
-  sectionLabel: { letterSpacing: 0.5, paddingHorizontal: 4 },
-  settingsCard: { paddingVertical: 4, gap: 0 },
-  settingRow: {
+  menu: { paddingVertical: 4, gap: 0 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 14,
+  },
+  rowIcon: { width: 26, textAlign: 'center' },
+  rowText: { flex: 1, gap: 1 },
+  versionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 14,
   },
-  settingRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  chevron: { fontSize: 22, fontWeight: '400', lineHeight: 22 },
-
   divider: { height: StyleSheet.hairlineWidth },
-  signOut: { marginTop: 8 },
+  signOut: { marginTop: 4 },
 });
