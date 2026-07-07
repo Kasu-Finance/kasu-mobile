@@ -19,8 +19,6 @@ import { Screen } from '@/components/ui/screen';
 import { VisaCard } from '@/components/ui/visa-card';
 import { Avatar } from '@/features/profile/avatar';
 import { useIdentity } from '@/features/profile/use-identity';
-import { EpochYield } from '@/features/lending/epoch-yield';
-import { Portfolio } from '@/features/lending/portfolio';
 import { AddMoneySheet } from '@/features/onramp/add-money-sheet';
 import { SendSheet } from '@/features/onramp/send-sheet';
 import { formatUnits, formatUsd } from '@/lib/format';
@@ -146,11 +144,7 @@ export default function HomeScreen() {
               itself (flip) is the entry to management. */}
           {!card.isActive ? <CardHomeEntry address={viewAddress} /> : null}
 
-          {/* The product hook: interest tops up the card every Thursday. */}
-          <EpochYield />
-
-          <Portfolio summaryOnly />
-
+          {/* Weekly top-up + Total invested now live on the Earn tab. */}
           <ActivityScreen limit={5} onViewAll={() => router.push('/activity')} />
         </>
       )}
