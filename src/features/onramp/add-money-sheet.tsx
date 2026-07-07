@@ -69,10 +69,16 @@ export function AddMoneySheet({
   };
 
   const onSelect = (m: Method) => {
-    // "From another account" opens the full-screen deposit view (QR + address).
+    // Full-screen views: "From another account" → deposit QR; "Bank transfer" →
+    // the Bridge-preview account details. "Debit card" stays inline (MoonPay).
     if (m === 'account') {
       close();
       router.push('/deposit');
+      return;
+    }
+    if (m === 'bank') {
+      close();
+      router.push('/bank-transfer');
       return;
     }
     setSelected(m);
@@ -83,12 +89,10 @@ export function AddMoneySheet({
 
   return (
     <BottomSheet visible={visible} title={title} onClose={close}>
-      {selected === null ? (
-        <MethodList onSelect={onSelect} />
-      ) : selected === 'card' ? (
+      {selected === 'card' ? (
         <CardTopUp onBack={() => setSelected(null)} />
       ) : (
-        <ComingSoon method={current!} onBack={() => setSelected(null)} />
+        <MethodList onSelect={onSelect} />
       )}
     </BottomSheet>
   );
@@ -161,29 +165,6 @@ function CardTopUp({ onBack }: { onBack: () => void }) {
       {!unavailable ? (
         <Button title="Add with card or Apple Pay" loading={busy} onPress={launch} />
       ) : null}
-      <Pressable accessibilityRole="button" onPress={onBack} style={styles.backRow}>
-        <ThemedText type="small" themeColor="textSecondary">
-          ‹ Back
-        </ThemedText>
-      </Pressable>
-    </View>
-  );
-}
-
-function ComingSoon({
-  method,
-  onBack,
-}: {
-  method: { label: string };
-  onBack: () => void;
-}) {
-  return (
-    <View style={styles.section}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {method.label} is coming soon. In the meantime you can add money
-        instantly from another account — go back and choose “From another
-        account”.
-      </ThemedText>
       <Pressable accessibilityRole="button" onPress={onBack} style={styles.backRow}>
         <ThemedText type="small" themeColor="textSecondary">
           ‹ Back
