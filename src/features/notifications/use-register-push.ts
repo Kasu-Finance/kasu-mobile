@@ -60,7 +60,10 @@ export interface RegisterPushState {
  * Idempotent and a safe no-op when permission is denied or no `projectId` is
  * configured. Never throws — errors are captured into `error`.
  */
-export function useRegisterPush(address: string | null): RegisterPushState {
+export function useRegisterPush(
+  address: string | null,
+  enabled = true,
+): RegisterPushState {
   const [state, setState] = useState<RegisterPushState>({
     isRegistering: false,
     registered: false,
@@ -73,7 +76,8 @@ export function useRegisterPush(address: string | null): RegisterPushState {
   const registeredAddressRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!address) return;
+    // Master notifications toggle off → don't register this device.
+    if (!address || !enabled) return;
 
     const normalized = address.toLowerCase();
     if (registeredAddressRef.current === normalized) return;
@@ -166,7 +170,7 @@ export function useRegisterPush(address: string | null): RegisterPushState {
     return () => {
       cancelled = true;
     };
-  }, [address]);
+  }, [address, enabled]);
 
   return state;
 }

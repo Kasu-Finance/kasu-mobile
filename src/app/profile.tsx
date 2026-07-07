@@ -123,7 +123,7 @@ export default function ProfileScreen() {
           icon="bell.fill"
           title="Notifications"
           subtitle="Control how you receive updates"
-          soon
+          onPress={() => router.push('/notifications-settings')}
         />
         <Divider />
         <MenuRow

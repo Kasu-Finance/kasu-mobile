@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Colors } from '@/constants/theme';
 import { useCardStatus, useEnsureCardSession } from '@/features/card';
 import { NotificationsProvider } from '@/features/notifications/notifications-provider';
+import { useNotificationPrefs } from '@/features/notifications/use-notification-prefs';
 import { useRegisterPush } from '@/features/notifications/use-register-push';
 import { SdkProvider } from '@/lib/sdk/sdk-provider';
 import { AppProviders } from '@/lib/web3/privy-provider';
@@ -43,10 +44,12 @@ const KasuNavTheme = {
   },
 };
 
-/** Registers the device's Expo push token once a wallet address is available (F5). */
+/** Registers the device's Expo push token once a wallet address is available (F5),
+ *  unless the user has turned the master notifications toggle off. */
 function PushRegistrar() {
   const { address } = useEthersSigner();
-  useRegisterPush(address);
+  const { prefs } = useNotificationPrefs();
+  useRegisterPush(address, prefs.enabled);
   return null;
 }
 
