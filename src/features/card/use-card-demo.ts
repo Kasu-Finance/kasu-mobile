@@ -20,11 +20,14 @@ async function ensureFunded(userAddress: string): Promise<void> {
   }
 }
 
-async function simulateOne(userAddress: string): Promise<boolean> {
+async function simulateOne(
+  userAddress: string,
+  notify = true,
+): Promise<boolean> {
   try {
     const res = await api.post<{ ok: boolean }>(
       '/mobile/card/demo/simulate-purchase',
-      { userAddress },
+      { userAddress, notify },
     );
     return Boolean(res.data?.ok);
   } catch {
@@ -81,7 +84,8 @@ export function useSeedDemoCard(
     (async () => {
       await ensureFunded(address);
       for (let i = 0; i < 3 && !cancelled; i++) {
-        const ok = await simulateOne(address);
+        // notify:false — seeding history on card setup shouldn't push 3 alerts.
+        const ok = await simulateOne(address, false);
         if (!ok) break; // not sandbox / no active card — stop
       }
       if (!cancelled) {
