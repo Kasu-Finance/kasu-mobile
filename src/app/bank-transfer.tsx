@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -37,16 +38,10 @@ export default function BankTransferScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Button
-          title="Close"
-          variant="ghost"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-          style={styles.close}
-        />
-        <ThemedText type="subtitle">Bank transfer</ThemedText>
-        <View style={styles.closeSpacer} />
-      </View>
+      <ScreenHeader
+        title="Bank transfer"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+      />
 
       {/* Coming-soon banner */}
       <Card style={[styles.banner, { borderColor: ACCENT }]}>

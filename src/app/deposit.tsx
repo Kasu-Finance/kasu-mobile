@@ -8,6 +8,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { refreshFinancials } from '@/lib/refresh';
@@ -74,15 +75,10 @@ export default function DepositRoute() {
   return (
     <SafeAreaView style={[styles.flex, { backgroundColor: theme.background }]} edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.header}>
-        <ThemedText type="subtitle">Add money</ThemedText>
-        <Button
-          title="Close"
-          variant="ghost"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
-          style={styles.close}
-        />
-      </View>
+      <ScreenHeader
+        title="Add money"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+      />
 
       {received ? (
         <View style={styles.successBody}>
