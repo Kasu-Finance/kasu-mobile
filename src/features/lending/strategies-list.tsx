@@ -1,11 +1,16 @@
 import type { Strategy } from '@kasufinance/kasu-sdk';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SymbolView } from 'expo-symbols';
+
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
+import { GradientCard } from '@/components/ui/gradient-card';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatUsd } from '@/lib/format';
+
+import { EARN_GRADIENT } from './earn-panel';
 
 import {
   deriveStrategyStatus,
@@ -86,8 +91,11 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
       accessibilityLabel={`Open ${strategy.name}`}
       onPress={onPress}
       style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
-      <Card style={styles.cardGap}>
-        <Text style={[styles.title, { color: theme.text }]}>{strategy.name}</Text>
+      <GradientCard {...EARN_GRADIENT} contentStyle={styles.cardGap}>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, { color: theme.text }]}>{strategy.name}</Text>
+          <SymbolView name="chevron.right" size={16} tintColor={theme.textSecondary} />
+        </View>
 
         {/* Net APY — headline value + tranche flow, compact. */}
         <View style={styles.apyRow}>
@@ -113,7 +121,7 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
             {formatUsd(strategy.availableCapacity)} available
           </ThemedText>
         </View>
-      </Card>
+      </GradientCard>
     </Pressable>
   );
 }
@@ -122,6 +130,7 @@ const styles = StyleSheet.create({
   list: { gap: 12 },
   gap: { gap: 6 },
   cardGap: { gap: 10 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

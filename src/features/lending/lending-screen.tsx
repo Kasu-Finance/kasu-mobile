@@ -7,8 +7,7 @@ import { TabHeader } from '@/components/ui/tab-header';
 
 import { queryClient } from '@/lib/query/query-client';
 
-import { EpochYield } from './epoch-yield';
-import { Portfolio } from './portfolio';
+import { EarnSummary } from './earn-summary';
 import { StrategiesList } from './strategies-list';
 import { lendingKeys } from './use-strategies';
 import { Withdraw } from './withdraw';
@@ -70,8 +69,7 @@ export default function LendingScreen() {
         queryClient.invalidateQueries({ queryKey: lendingKeys.all })
       }>
       <TabHeader help={EARN_HELP} />
-      <EpochYield />
-      <Portfolio summaryOnly />
+      <EarnSummary />
       <StrategiesList onSelect={(strategy) => router.push(`/lending/${strategy.id}`)} />
     </Screen>
   );
