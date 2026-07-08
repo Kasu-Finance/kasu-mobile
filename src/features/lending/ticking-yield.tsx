@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { StyleProp, TextStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 
@@ -22,9 +23,13 @@ const TICK_INTERVAL_MS = 1_000;
 export function TickingYield({
   base,
   dailyInterest,
+  style,
+  fractionDigits = 4,
 }: {
   base: number;
   dailyInterest: number;
+  style?: StyleProp<TextStyle>;
+  fractionDigits?: number;
 }) {
   const [display, setDisplay] = useState(base);
   // Hold the freshest base/rate so the interval callback always reads
@@ -47,12 +52,12 @@ export function TickingYield({
   }, [base, dailyInterest]);
 
   const formatted = `$${display.toLocaleString('en-US', {
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 4,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   })}`;
 
   return (
-    <ThemedText type="title" style={{ fontSize: 28, lineHeight: 34 }}>
+    <ThemedText type="title" style={[{ fontSize: 28, lineHeight: 34 }, style]}>
       {formatted}
     </ThemedText>
   );

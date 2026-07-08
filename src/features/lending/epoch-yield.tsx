@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Card } from '@/components/ui/card';
+import { GradientCard } from '@/components/ui/gradient-card';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { formatUsd } from '@/lib/format';
 import { useViewAddress } from '@/lib/web3/use-view-address';
 
+import { EARN_GRADIENT } from './earn-panel';
 import { usePortfolio } from './use-portfolio';
 
 /** Day-of-week for the weekly epoch boundary (Thursday). */
@@ -78,28 +79,22 @@ export function EpochYield() {
   const amountText = weeklyYield != null ? formatUsd(weeklyYield) : '—';
 
   return (
-    <Card style={[styles.card, { borderColor: ACCENT }]}>
-      <ThemedText type="smallBold" style={{ color: ACCENT }}>
-        Weekly top up
+    <GradientCard {...EARN_GRADIENT} contentStyle={styles.content}>
+      <ThemedText type="smallBold" style={styles.label}>
+        WEEKLY TOP UP
       </ThemedText>
-
       <ThemedText type="title" style={styles.amount}>
         {amountText}
       </ThemedText>
-
-      <View style={styles.row}>
-        <ThemedText type="smallBold">Next top-up in {countdown}</ThemedText>
-      </View>
-    </Card>
+      <ThemedText type="small" themeColor="textSecondary">
+        Next top-up in {countdown}
+      </ThemedText>
+    </GradientCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 6, borderWidth: 1 },
-  amount: { fontSize: 36, lineHeight: 42 },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+  content: { gap: 4 },
+  label: { color: ACCENT, letterSpacing: 0.5 },
+  amount: { fontSize: 34, lineHeight: 40 },
 });

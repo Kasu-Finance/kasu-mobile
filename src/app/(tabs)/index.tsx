@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,7 @@ import {
 } from '@/features/card';
 import { Screen } from '@/components/ui/screen';
 import { VisaCard } from '@/components/ui/visa-card';
-import { Avatar } from '@/features/profile/avatar';
-import { useIdentity } from '@/features/profile/use-identity';
+import { TabHeader } from '@/components/ui/tab-header';
 import { AddMoneySheet } from '@/features/onramp/add-money-sheet';
 import { SendSheet } from '@/features/onramp/send-sheet';
 import { formatUnits, formatUsd } from '@/lib/format';
@@ -27,6 +26,25 @@ import { useStableBalance } from '@/lib/web3/use-balance';
 import { useViewAddress } from '@/lib/web3/use-view-address';
 
 type Sheet = 'add' | 'send' | null;
+
+/** Home explanations — behind the "?". */
+const HOME_HELP = {
+  title: 'Home',
+  items: [
+    {
+      heading: 'Your balance',
+      body: 'The dollars you can spend right now — on your card or to send. It’s your wallet and card together, as one number.',
+    },
+    {
+      heading: 'Your card',
+      body: 'Tap the card to flip it: see the full number, top it up, or view recent purchases. Tap again to flip back.',
+    },
+    {
+      heading: 'Add funds & Send',
+      body: 'Add money by debit card, bank transfer, or from another account — and send dollars to anyone instantly.',
+    },
+  ],
+};
 
 /**
  * Home: neobank dashboard. The card is the hero — tapping it flips it to reveal
@@ -37,7 +55,6 @@ type Sheet = 'add' | 'send' | null;
 export default function HomeScreen() {
   const router = useRouter();
   const { viewAddress } = useViewAddress();
-  const identity = useIdentity();
   const chain = getChain(DEFAULT_CHAIN_ID);
   const balanceQuery = useStableBalance(viewAddress, DEFAULT_CHAIN_ID);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -98,15 +115,7 @@ export default function HomeScreen() {
 
   return (
     <Screen onRefresh={onRefresh}>
-      <View style={styles.header}>
-        <ThemedText type="subtitle">Home</ThemedText>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Account and settings"
-          onPress={() => router.push('/profile')}>
-          <Avatar initial={identity.initial} size={40} />
-        </Pressable>
-      </View>
+      <TabHeader help={HOME_HELP} />
 
       <VisaCard
         balance={displayBalance}
@@ -157,7 +166,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   tapHint: { textAlign: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' },
   actions: {
     flexDirection: 'row',
     gap: 12,

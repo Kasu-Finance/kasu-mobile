@@ -56,7 +56,10 @@ export function StrategiesList({ onSelect }: StrategiesListProps) {
     );
   }
 
-  const strategies = filterLiveStrategies(data ?? []);
+  // Only lendable strategies — drop $0-TVL placeholders and Full ones.
+  const strategies = filterLiveStrategies(data ?? []).filter(
+    (s) => deriveStrategyStatus(s) !== 'Full',
+  );
   if (strategies.length === 0) {
     return (
       <Card>
@@ -94,20 +97,12 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
           <StatusPill status={status} />
         </View>
 
-        {!!strategy.assetClass && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {strategy.assetClass}
-          </ThemedText>
-        )}
-
-        {/* Net APY — elevated panel: label + tranche flow left, headline value right. */}
-        <View
-          style={[
-            styles.apyPanel,
-            { backgroundColor: theme.cardElevated, borderColor: theme.border },
-          ]}>
-          <View style={styles.apyPanelLeft}>
-            <ThemedText type="small">Net APY</ThemedText>
+        {/* Net APY — headline value + tranche flow, compact. */}
+        <View style={styles.apyRow}>
+          <View style={styles.apyLeft}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Net APY
+            </ThemedText>
             {flow.length > 0 && (
               <ThemedText type="small" themeColor="textSecondary">
                 {flow.join(' → ')}
@@ -117,32 +112,17 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
           <Text style={[styles.apyValue, { color: theme.primary }]}>{apyRange}</Text>
         </View>
 
-        {/* Divided detail rows. */}
-        <View>
-          <DetailRow label="TVL" value={formatUsd(strategy.tvl.total)} divider />
-          <DetailRow
-            label="Available capacity"
-            value={status === 'Full' ? 'Full' : formatUsd(strategy.availableCapacity)}
-          />
+        {/* One compact meta line. */}
+        <View style={styles.metaRow}>
+          <ThemedText type="small" themeColor="textSecondary">
+            TVL {formatUsd(strategy.tvl.total)}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {formatUsd(strategy.availableCapacity)} available
+          </ThemedText>
         </View>
       </Card>
     </Pressable>
-  );
-}
-
-function DetailRow({ label, value, divider }: { label: string; value: string; divider?: boolean }) {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        styles.detailRow,
-        divider && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border },
-      ]}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-      <ThemedText type="smallBold">{value}</ThemedText>
-    </View>
   );
 }
 
@@ -165,31 +145,27 @@ function StatusPill({ status }: { status: StrategyStatus }) {
 const styles = StyleSheet.create({
   list: { gap: 12 },
   gap: { gap: 6 },
-  cardGap: { gap: 12 },
+  cardGap: { gap: 10 },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: 8,
   },
-  title: { flex: 1, fontFamily: Fonts.serifBold, fontSize: 20, lineHeight: 26 },
-  apyPanel: {
+  title: { flex: 1, fontFamily: Fonts.serifBold, fontSize: 18, lineHeight: 24 },
+  apyRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 8,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
   },
-  apyPanelLeft: { gap: 2, flexShrink: 1 },
-  apyValue: { fontFamily: Fonts.serifBold, fontSize: 26, lineHeight: 30 },
-  detailRow: {
+  apyLeft: { gap: 2, flexShrink: 1 },
+  apyValue: { fontFamily: Fonts.serifBold, fontSize: 24, lineHeight: 28 },
+  metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 10,
   },
   pill: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 999 },
   pillText: { fontFamily: Fonts.sansSemiBold, fontSize: 13 },
