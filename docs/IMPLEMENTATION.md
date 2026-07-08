@@ -68,7 +68,11 @@ else is a pushed route with a **`ScreenHeader`** (circular back + centered title
   name + **Options** (tranches, "Choose your repayment priority", Full ones hidden,
   each tappable) → **amount screen** (`LendAmount`, Plasma keypad + 25/50/75%,
   **Lend KYC-gated/disabled**). Key data + About live behind the detail `?`.
-- **Rewards** (`app/(tabs)/rewards.tsx`) — cashback + referral shape (zeros).
+- **Rewards** (`app/(tabs)/rewards.tsx`) — Plasma's "Tier" screen: tier (**Silver**)
+  + **Points** (1/$ spent), a rewards card (cashback + referrals), payouts
+  **derived from the real card purchases** (`use-rewards.ts`: 2% on the first $500/mo
+  + 0.1% after), and Cashback / Referrals explainer sheets (with an svg progress
+  ring). Fake-but-connected; referrals $0 (not wired).
 - **Activity** (`app/activity.tsx`) — Activity / Alerts segments (Payments segment
   removed). Feed merges lending (SDK) + card purchases (Immersve) + on-chain USDC
   transfers (Tenderly). Tap a row → detail sheet.
