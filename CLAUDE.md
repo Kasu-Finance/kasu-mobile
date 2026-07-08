@@ -27,7 +27,12 @@ Before adding any user-facing copy, check it against this rule.
   **Kasu workspace root** (one level up) — the source of truth for Phases A–E, KYC/card/fiat
   vendor choices, and open decisions.
 
-Quick status: real login (email/Google/Apple via Privy), backend live in prod
-(`backend.kasu.finance`, `/mobile/*` enabled), the Immersve card works end-to-end on the sandbox
-(silent session → in-app KYC → real PAN → funded demo purchases), tabs are Home/Earn/Rewards.
-Dev loop is `npx expo start` + hot reload on the device dev client.
+Quick status: real login (email/Google/Apple via Privy), backend live in prod (`backend.kasu.finance`,
+`/mobile/*` enabled, image v40). The Immersve card works end-to-end on the sandbox (silent session →
+in-app KYC → real PAN → funded purchases), and a card purchase fires a real **push notification** (APNs
++ in-app Alerts). **Add funds** = deposit QR (real, USDC on Base) + MoonPay debit-card (sandbox,
+region-blocked) + Bridge bank-transfer preview. **Send** = real gasless-intent P2P + Bridge bank-payout
+preview. **Earn** = gradient panels + strategy → Options ("repayment priority") → amount screen (Lend
+KYC-gated). Profile/notifications-settings are real. Tabs Home/Earn/Rewards (no page titles; avatar +
+"?" header, "?" only on Earn). **Gotcha:** Privy Expo can't sponsor EOA gas → Send/Lend need ETH (gas
+tank deferred); Send must pass `gasLimit` (not `gas`). Dev loop is `npx expo start` + hot reload.

@@ -15,19 +15,19 @@ spending** (Immersve sandbox — which must still *look* real).
 > **`docs/mobile-neobank-concept-plan.md`** (one level up from this repo). This
 > file is the implementation log; that file is the plan.
 
-## Current state (2026-07-05)
+## Current state (2026-07-08)
 
 - **Runs as a dev client on a real iPhone** (EAS `development` profile) with
   **Metro hot reload** (`npx expo start`) — JS changes appear in ~1s, no rebuild.
-  Also runs on the iOS Simulator (`simulator` profile).
-- **Real login** — email OTP / Google / Apple via Privy embedded wallets. **No
-  demo mode** (removed 2026-07-02: no login bypass, no demo portfolio address).
-- **Backend is live in prod** — `kasu-backend` on Lightsail (`backend.kasu.finance`),
-  the whole `/mobile/*` surface enabled (`MOBILE_ENABLED=true`) with the Immersve
-  card module against the Immersve public sandbox.
-- **Card works end-to-end** on the Immersve sandbox: silent wallet session →
-  in-app identity check → create + activate → real PAN on the flippable card →
-  funded balance + seeded purchases in the feed.
+- **Real login** — email OTP / Google / Apple via Privy embedded wallets (plain
+  EOA). No demo mode.
+- **Backend live in prod** — `kasu-backend` on Lightsail (`backend.kasu.finance`),
+  the whole `/mobile/*` surface enabled (`MOBILE_ENABLED=true`). Current image
+  **v40** (81 env keys: `IMMERSVE_*`, `MOONPAY_*`, `MOBILE_ENABLED`, `NEXERA_*`, …).
+- **Card works end-to-end** on the Immersve sandbox (silent session → in-app
+  identity check → create/activate → real PAN → funded balance + seeded purchases).
+- **Push notifications work end-to-end** — a card purchase fires a real APNs
+  push (banner + in-app Alerts feed). Verified on device.
 - Dark-only, branded (brass `#d29e61`, DM Sans + Crimson Text serif, gold-bonsai
   card, brass app icon).
 
@@ -35,142 +35,148 @@ spending** (Immersve sandbox — which must still *look* real).
 | Area | State |
 |---|---|
 | Login (email/Google/Apple), embedded wallet | ✅ real |
-| Lending strategies, APY, portfolio | ✅ real (on-chain via SDK) |
-| Card: onboarding, KYC, PAN reveal, top-up, purchases | ✅ real on the **Immersve sandbox** (looks real; testnet behind it) |
-| Activity feed (lending + card purchases merged) | ✅ real |
-| Fiat "Add funds" (bank transfer / debit card) | 🔶 stubbed "Soon" — MoonPay/Bridge, plan Phase D |
-| Lending KYC (Compilot) on mobile | 🔶 deferred — unbuilt gap (see below); shows "coming shortly" |
-| Withdraw / off-ramp | 🔶 not wired (Phase D) |
-| Payments / notifications endpoints | ⚠️ enabled but DB tables may be unprovisioned; card path unaffected |
+| Lending strategies, APY, portfolio, ticking yield | ✅ real (on-chain via SDK) |
+| Card: onboarding, KYC, PAN reveal, top-up, purchases | ✅ real on the **Immersve sandbox** |
+| Activity feed (lending + card + **on-chain USDC transfers**) | ✅ real — transfers scraped from the Tenderly RPC (`eth_getLogs`, ~1mo) |
+| **Add funds → From another account** (deposit) | ✅ real — QR of the account number, live "received" watch (USDC on Base) |
+| **Send → account number** (P2P) | ✅ real — gasless-intent USDC transfer via Privy (see gas note) |
+| **Push notifications** (card purchase → APNs) | ✅ real; settings screen w/ master + category toggles |
+| Profile + account details + legal links | ✅ real |
+| **Add funds → Debit card** (MoonPay) | 🔶 integration correct + live in **sandbox**; MoonPay geo-blocks the test region → shows "coming soon to your region". Real money after MoonPay KYB (key swap). |
+| **Add funds → Bank transfer** (Bridge) | 🔶 Plasma-style **preview** ("coming soon — Bridge"), copy/share disabled |
+| **Send → Bank account** (Bridge off-ramp) | 🔶 Plasma-style **preview** (currency → rail form), Send disabled |
+| Lending **Lend** (deposit) | 🔶 KYC-gated — amount screen is built but the Lend button is disabled ("verify to earn") since no mobile user is KYC'd |
+| Lending KYC (Compilot) on mobile | 🔶 deferred — unbuilt gap; folded into the Sumsub migration |
+| **Gasless transactions** | 🔶 deferred — Privy Expo can't sponsor EOA gas (see gotchas); needs a gas tank / EIP-3009 relayer |
 
 ## IA / screen map
-Tabs (NativeTabs): **Home / Earn / Rewards**. Activity and Profile are **pushed
-routes** (`/activity`, `/profile`), not tabs.
+Tabs: **Home / Earn / Rewards**. No page titles — the tab bar names the screen.
+Each tab shows a **`TabHeader`**: profile avatar (→ `/profile`) top-left, and a
+**"?" help button** top-right **only on Earn** (explains strategies). Everything
+else is a pushed route with a **`ScreenHeader`** (circular back + centered title
++ optional right slot).
 
 - **Home** (`app/(tabs)/index.tsx`) — the **card is the hero**. Tapping it flips
-  the card (revealing the real number, with a "Loading your details…" state
-  while the PAN fetches) and swaps the content below for **card management**
-  (card balance, top up, card activity, sample purchase). Flipping back returns
-  to the account view: two Plasma-style actions (**Add funds** / **Send**), the
-  weekly-interest hook (`EpochYield`), the portfolio summary, and the merged
-  activity feed. Single balance, shown on the card. **Pull down to refresh.**
-- **Earn** (`app/(tabs)/earn.tsx` → `lending-screen`) — `EarnHeader` (best live
-  APY headline + "$X could earn you $Y/yr" simulator + weekly-Thursday framing)
-  over the strategies list → strategy detail (`/lending/[poolId]`) → the stepped
-  deposit flow (`use-deposit.ts`: contract → sign → exact-amount approve →
-  deposit → receipt). Deposits are gated by the real Compilot `KycGate`.
-- **Rewards** (`app/(tabs)/rewards.tsx`) — cashback + referral shape (zeros until
-  the card program feeds it), Thursday framing.
-- **Activity** (`app/activity.tsx`) — merged feed (lending + card `spend`) with a
-  segmented Activity / Payments / Alerts switcher; tap a row for a detail sheet.
-- **Profile** (`app/profile.tsx`) — Privy identity, account/KYC, settings, sign out.
-- **Onboarding** (`app/(auth)/`) — `welcome` (card hero + motto) → `features`
-  (3-slide carousel) → `login` (Apple first, then Google, then email). Logged-out
-  entry redirects to `/(auth)/welcome`.
+  it (revealing the real PAN) and swaps the content below for **card management**
+  (balance, top up, activity, sample purchase). Flipping back: **one unified
+  balance** (wallet + card) on the card face, two actions (**Add funds** / **Send**),
+  and the merged activity feed (5 rows + "View all" → `/activity`). Pull to refresh.
+- **Earn** (`app/(tabs)/earn.tsx` → `lending-screen`) — two gradient hero panels:
+  **Weekly top up** (`EpochYield`, Thursday countdown) and **Total invested**
+  (`Portfolio`, compact: invested + lifetime-yield ticker on one row) → the
+  strategies list. `?` explains earning. Strategy card → detail (`/lending/[poolId]`):
+  name + **Options** (tranches, "Choose your repayment priority", Full ones hidden,
+  each tappable) → **amount screen** (`LendAmount`, Plasma keypad + 25/50/75%,
+  **Lend KYC-gated/disabled**). Key data + About live behind the detail `?`.
+- **Rewards** (`app/(tabs)/rewards.tsx`) — cashback + referral shape (zeros).
+- **Activity** (`app/activity.tsx`) — Activity / Alerts segments (Payments segment
+  removed). Feed merges lending (SDK) + card purchases (Immersve) + on-chain USDC
+  transfers (Tenderly). Tap a row → detail sheet.
+- **Profile** (`app/profile.tsx`) — inline account panel (name, email, copyable
+  account number, verification, member-since), settings menu, real legal links
+  (`docs.kasu.finance`), version, sign out. `/notifications-settings` (master +
+  category toggles) hangs off it.
+- **Money movement** — `/deposit` (QR receive), `/bank-transfer` (Bridge preview),
+  `/send-bank` (Bridge off-ramp preview); Send P2P is a bottom sheet.
+- **Onboarding** (`app/(auth)/`) — welcome → features carousel → login.
 
 ## Card integration (Immersve) — the centerpiece
-Replaced the earlier Gnosis Pay stub. Non-custodial: the user's Privy embedded
-**EOA** funds a Mastercard on the Immersve rail. (Smart-account/Safe signatures
-are rejected by Immersve — verified — so it's a plain EOA; see plan §3.1.)
+Non-custodial: the user's Privy embedded **EOA** funds a Mastercard on the
+Immersve rail (smart-account sigs are rejected by Immersve — verified — so plain
+EOA; plan §3.1).
 
-App (`src/features/card/`):
-- `use-card-session.ts` — **silent SIWE**: the embedded wallet signs Immersve's
-  challenge programmatically the moment it's ready, so the user never sees a
-  "connect/sign wallet" step.
-- `use-card-status.ts` — the state machine: `session-required → kyc-required →
-  kyc-pending → ready → active` (+ `frozen`/`rejected`). Polls while settling.
-- `card-screen.tsx` — onboarding sub-flow (bank-style copy: "Verify your
-  identity" with a phone field + the account email, framed as a card-partner
-  check). Create navigates back to Home.
-- **In-app KYC** — `app/card-kyc.tsx` hosts the hosted check in a full-screen
-  `react-native-webview` (camera via `NSCameraUsageDescription`), our own header,
-  no browser chrome. Refetches card status on close / app-foreground.
-- `card-management.tsx` — the flipped-card panel on Home (balance, top up, card
-  activity, sample purchase).
-- `use-card-pan.ts` — reveals the real PAN via a single-use secure token,
-  fetched **by the app** (card numbers never transit our backend, PCI).
-- `use-card-demo.ts` — sandbox demo: funds the card ($500 simulator deposit) then
-  seeds a few realistic purchases (a $0 card can't authorize, so funding is
-  required first); guarded to the sandbox by the backend.
+App (`src/features/card/`): `use-card-session.ts` (silent SIWE), `use-card-status.ts`
+(state machine), `card-screen.tsx` (onboarding), `app/card-kyc.tsx` (in-app KYC
+WebView), `card-management.tsx` (flipped panel), `use-card-pan.ts` (single-use
+secure token — PANs never transit the backend, PCI), `use-card-demo.ts` (sandbox
+seed; `notify:false` so seeding doesn't push).
 
-Backend (`kasu-backend/src/mobile/card/`):
-- `immersve.client.ts` (typed REST wrapper) + `immersve-session.store.ts`
-  (in-memory per-wallet sessions; single-use refresh tokens) + `mobile-card.service.ts`.
-- Endpoints: `POST session/init`, `POST session/complete`, `GET status`,
-  `POST contact`, `POST create`, `POST pan-token`, `POST topup`,
-  `GET transactions`, `POST demo/simulate-purchase` (sandbox-only, guarded).
-- Config via `IMMERSVE_*` env (base URL, client app id, card program id, funding
-  channel = simulator, network = polygon-amoy, api key/secret). Unconfigured →
-  status `none` (degrades gracefully).
+Backend (`kasu-backend/src/mobile/card/`): `immersve.client.ts` + in-memory
+`immersve-session.store.ts` + `mobile-card.service.ts`. Endpoints: session
+init/complete, status, contact, create, pan-token, topup, transactions,
+`demo/simulate-purchase` (sandbox-only; on success fires a purchase **push**).
+
+## Notifications (F5) — live
+- **Register:** `use-register-push.ts` gets the Expo push token → `/mobile/
+  notifications/register-push` (stored per wallet). Master toggle in
+  `/notifications-settings` gates registration (`useNotificationPrefs`).
+- **Deliver:** `PushDispatchService.sendToAddress` → Expo Push API → APNs/FCM.
+- **Trigger (live):** `simulatePurchase` → "Purchase approved" push. The app's
+  `NotificationsProvider` auto-appends received pushes to the in-app Alerts feed.
+- **Deferred:** on-chain event detectors (money in/out, weekly interest), MoonPay
+  webhook, and **per-category backend gating** (prefs are local-only today).
+- **Prereq:** the EAS project must have an APNs key for delivery.
+
+## Money-reload bus
+`src/lib/refresh.ts` — `refreshFinancials()` invalidates all money-related query
+keys (balance, lending/portfolio, card, activity, on-chain transfers). All
+financial data is TanStack Query, so invalidation IS the event bus. Called on
+deposit-received, send-complete, MoonPay return; drop it into any future
+money-moving action.
 
 ## Backend deploy notes
-- `kasu-backend` deploys via `./deploy.sh` (build linux/amd64 → push → **read the
-  live env back and re-apply with the new image**; never wipes the env map).
-- The `/mobile/*` module is gated by **`MOBILE_ENABLED=true`** in the Lightsail
-  env — it was dormant until 2026-07-03. Env-only changes (adding `IMMERSVE_*`,
-  `MOBILE_ENABLED`) use the guarded read-merge-write pattern in `deploy.sh`.
-- Current prod: image `v33`, env has 74 keys incl. all `IMMERSVE_*` + `MOBILE_ENABLED`.
+- `./deploy.sh` — build linux/amd64 → push → **read the live env back and re-apply
+  with the new image** (never wipes the env map). Env-only changes use the guarded
+  read-merge-write (e.g. `MOONPAY_BASE_CURRENCY`).
+- **Build gotcha:** the Docker `npm` cache can corrupt (`EEXIST /root/.npm/
+  _cacache`) → a silently-failed build pushes a STALE image. Fix: `docker builder
+  prune -af` then rebuild; verify `docker images kasu-backend:latest` is fresh
+  before deploying.
 
 ## Architecture & non-obvious gotchas
-- **Entry / polyfills** — `index.js` loads `src/lib/web3/crypto-polyfills.ts`
-  before `expo-router/entry` (ethers/SDK need `getRandomValues`, Buffer, etc.).
-- **Metro** — `metro.config.js` sets package-exports condition order
-  `['react-native','browser','require']` so Privy's `jose` uses its WebCrypto
-  build, not Node `crypto`. Required.
-- **Providers at the ROOT layout** — `SdkProvider` + `NotificationsProvider` in
-  `src/app/_layout.tsx` (not `(tabs)/_layout`) so root routes get the SDK.
-- **SDK config override** — `Kasu.create` gets
-  `configOverrides: { UNUSED_LENDING_POOL_IDS: ['0x000…000'], poolMetadataMapping: {} }`.
-  The subgraph treats `id_not_in: []` as "match nothing", so the default empty
-  list returns ZERO pools; the sentinel fixes it.
-- **Read-only SDK** — before a signer exists, `SdkProvider` builds a
-  `JsonRpcProvider`-backed `Kasu` so strategy/pool reads work pre-login.
-- **Base RPC** — `chains.ts` reads `EXPO_PUBLIC_BASE_RPC_URL` (Tenderly gateway)
-  with a `mainnet.base.org` fallback; the public RPC is slow for `getPositions`.
-- **SDK amount units** — `tranche.investedAmount` / `*.yieldEarnings` are
-  ether-formatted $ strings; **`pool.totalInvestedAmount` is 6-decimal base
-  units** (÷1e6 before display). Card balances are 6-decimal minor units too.
-- **Single balance (the two-pocket reality)** — the wallet balance and the card
-  funding balance are different pockets on Base (deposit-based funding). Home
-  shows the card's spendable balance on the card face once a card is active; the
-  long-term "one balance" story needs approval-based funding on Base (plan §3.4).
+- **Entry / polyfills** — `index.js` loads `crypto-polyfills.ts` before router.
+- **Metro** — package-exports order `['react-native','browser','require']` so
+  Privy's `jose` uses WebCrypto.
+- **Providers at ROOT** — `SdkProvider` + `NotificationsProvider` in `_layout.tsx`.
+  `_layout` also **preloads** balance + card + card-session behind the splash so
+  Home paints with numbers ready (splash held to ≤3.5s).
+- **Privy send gotcha (IMPORTANT)** — the Expo embedded-wallet provider reads
+  **`gasLimit`** (not the JSON-RPC `gas` field) and **does not sponsor EOA gas**
+  (it signs client-side + broadcasts). Send must estimate gas and pass `gasLimit`;
+  gasless needs a backend gas tank / EIP-3009 relayer (deferred, plan §8). See
+  `use-ethers-signer.ts`.
+- **SDK config override** — `UNUSED_LENDING_POOL_IDS: ['0x000…000']` sentinel
+  (empty list returns zero pools).
+- **Read-only SDK** pre-login via `JsonRpcProvider`.
+- **Base RPC** — `EXPO_PUBLIC_BASE_RPC_URL` (Tenderly gateway); accepts a full
+  ~1-month `eth_getLogs` range in one call (used for the transfers feed).
+- **SDK amount units** — `tranche.investedAmount`/`*.yieldEarnings` are
+  ether-formatted $; `pool.totalInvestedAmount` is 6-decimal base units (÷1e6).
+- **Unified balance** — Home shows wallet + card funding summed (two pockets, one
+  number); a deposit lands in the wallet, a card top-up moves it to the card.
+- **Gradients without a native rebuild** — `GradientCard` uses the already-linked
+  `react-native-svg` (not `expo-linear-gradient`).
 
 ## Build / run
-- **Dev loop:** `npx expo start`, open the dev client on the iPhone, hot reload.
-  This is the default now — the device dev client was built once (EAS
-  `development` profile) and only needs a rebuild for **native** changes.
-- **Native changes that force an EAS rebuild** (and a reinstall): new native
-  modules, iOS entitlements/Info.plist (camera, Sign in with Apple), the app
-  icon. Last native rebuild bundled camera permission + in-app KYC + the icon.
-- **EAS** (authed `kivanov82`, project `@kivanov82/kasu`):
-  - Device dev client: `eas build -p ios --profile development`
-  - iOS Simulator: `eas build -p ios --profile simulator` then `eas build:run -p ios --latest`
-  - Apple: Developer Program enrolled (**Individual** — must convert to
-    Organization before real Apple-login users / App Store; SIWA `sub` is
-    team-scoped). Sign in with Apple + custom Apple OAuth creds set in Privy.
-- **`expo run:ios` (local) is broken on this Mac** — CocoaPods; use EAS.
-- Typecheck `npx tsc --noEmit`; lint `npx expo lint` (a few pre-existing
-  react-hooks/immutability + set-state-in-effect items are unrelated noise).
+- **Dev loop:** `npx expo start` + hot reload on the device dev client. Rebuild
+  (EAS) only for native changes (new native modules, entitlements/Info.plist, icon).
+- **EAS** (`kivanov82`, `@kivanov82/kasu`): dev client `eas build -p ios --profile
+  development`; simulator `--profile simulator` then `eas build:run`. `expo run:ios`
+  is broken locally (CocoaPods) — use EAS.
+- Apple: Program enrolled (**Individual** — convert to Organization before real
+  Apple-login users / App Store). SIWA + custom Apple OAuth creds set in Privy.
+- Typecheck `npx tsc --noEmit`; lint `npx expo lint` (pre-existing react-hooks /
+  set-state-in-effect noise in a couple of tickers).
 
 ## Roadmap (plan doc §1b, Phases A–E)
-- **A. De-crypto + 1:1 UX** — ✅ vocabulary sweep, Home/Earn/Rewards IA, Plasma
-  Home + Earn, onboarding, card-flip management, Add funds sheet. (A6 residency
-  gate / consent modal / limit presets still to do.)
-- **B. KYC** — Compilot kept for lending now; **Sumsub migration is pre-live**
-  (native RN SDK, avoids the mobile-Compilot WebView problem, but needs the Kasu
-  signer service for the on-chain deposit auth — plan §3.2).
-- **C. Card, looking real** — ✅ done (backend live, silent session, in-app KYC,
-  PAN, funded demo purchases).
-- **D. Fiat rail = MoonPay** — Add funds bank/card, withdraw; Bridge as a later
-  swap. Not wired (needs MoonPay signup).
+- **A. De-crypto + 1:1 UX** — ✅ done (vocabulary, IA, Plasma Home/Earn/Add-funds/
+  Send, onboarding, card-flip, profile, notifications, gradient Earn redesign).
+- **B. KYC** — Compilot deferred on mobile; **Sumsub migration is pre-live**.
+- **C. Card, looking real** — ✅ done.
+- **D. Fiat rails** — MoonPay card top-up **live in sandbox** (region-blocked in
+  test); deposit QR is the working funding rail. Bank transfer + bank send are
+  Bridge **previews**. Withdraw/off-ramp still to wire.
 - **E. TestFlight** — last.
 
 ## Known gaps / follow-ups
-- **Mobile Compilot KYC is unbuilt** — Compilot has no hosted URL (iframe SDK +
-  wallet-signature auth), so it can't run in a bare WebView. Deferred to the
-  Sumsub migration; the lending KYC gate shows a friendly "coming shortly".
+- **Gasless EOA (deferred)** — Send/Lend need ETH in the wallet; Privy Expo can't
+  sponsor EOA gas. Add a backend gas tank (recommended) or EIP-3009 relayer.
+- **MoonPay region** — sandbox blocks the test region for USDC-on-Base; MoonPay
+  account/onboarding matter, not our code. Real money after KYB (key swap).
+- **Mobile Compilot KYC unbuilt** — no hosted URL; folded into the Sumsub
+  migration. (Sumsub's native SDK avoids Compilot's `createWeb3Challenge` origin
+  allowlist entirely.)
 - **Security:** `/mobile/*` controllers are `@Public()` — bind to a wallet
-  signature before a real launch (esp. `kyc/status`, returns an email). Tenderly
-  RPC URL is in committed `eas.json` — restrict/rotate. Immersve sandbox
-  credentials are public (fine); swap to live creds via env at go-live.
-- **Immersve regions** — docs now list US as "coming soon" (AU/NZ/UK/EEA live).
+  signature before launch (esp. `kyc/status`, returns an email). In-memory
+  Immersve sessions are wiped on every deploy (Home re-signs silently).
+- **Pre-live:** data-governance/privacy review; Individual→Organization Apple.
