@@ -1,4 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
 import { ethers } from 'ethers';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -52,6 +53,7 @@ export function SendSheet({
   onClose: () => void;
 }) {
   const theme = useTheme();
+  const router = useRouter();
   const { wallets } = useEmbeddedEthereumWallet();
   const wallet = wallets[0];
   const address = wallet?.address ?? null;
@@ -153,28 +155,47 @@ export function SendSheet({
           <ThemedText type="small" themeColor="textSecondary">
             SEND TO
           </ThemedText>
-          {DESTINATIONS.map((d) => (
-            <View
-              key={d.key}
-              style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
-              <View style={[styles.iconCircle, { backgroundColor: ACCENT }]}>
-                <SymbolView name={d.icon} size={20} tintColor={theme.onAccent} />
-              </View>
-              <View style={styles.rowText}>
-                <View style={styles.rowTitleRow}>
-                  <ThemedText type="smallBold">{d.label}</ThemedText>
-                  <View style={[styles.badge, { backgroundColor: theme.backgroundSelected }]}>
-                    <ThemedText type="small" themeColor="textSecondary" style={styles.badgeText}>
-                      Soon
-                    </ThemedText>
-                  </View>
+          {DESTINATIONS.map((d) => {
+            // "Bank account" opens the Bridge-preview payout flow; others (e.g.
+            // Username) are still "Soon".
+            const isBank = d.key === 'bank';
+            const onPress = isBank
+              ? () => {
+                  close();
+                  router.push('/send-bank');
+                }
+              : undefined;
+            return (
+              <Pressable
+                key={d.key}
+                accessibilityRole="button"
+                disabled={!isBank}
+                onPress={onPress}
+                style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
+                <View style={[styles.iconCircle, { backgroundColor: ACCENT }]}>
+                  <SymbolView name={d.icon} size={20} tintColor={theme.onAccent} />
                 </View>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {d.sub}
-                </ThemedText>
-              </View>
-            </View>
-          ))}
+                <View style={styles.rowText}>
+                  <View style={styles.rowTitleRow}>
+                    <ThemedText type="smallBold">{d.label}</ThemedText>
+                    {!isBank ? (
+                      <View style={[styles.badge, { backgroundColor: theme.backgroundSelected }]}>
+                        <ThemedText type="small" themeColor="textSecondary" style={styles.badgeText}>
+                          Soon
+                        </ThemedText>
+                      </View>
+                    ) : null}
+                  </View>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {d.sub}
+                  </ThemedText>
+                </View>
+                {isBank ? (
+                  <SymbolView name="chevron.right" size={16} tintColor={theme.textSecondary} />
+                ) : null}
+              </Pressable>
+            );
+          })}
 
           <ThemedText type="small" themeColor="textSecondary" style={styles.orLabel}>
             OR ACCOUNT NUMBER
