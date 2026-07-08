@@ -1,3 +1,4 @@
+import type { StrategyTranche } from '@kasufinance/kasu-sdk';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -5,34 +6,49 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { HelpButton } from '@/components/ui/help-button';
 import { Screen } from '@/components/ui/screen';
-import { DepositFlow, StrategyDetails, useStrategy } from '@/features/lending';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { LendAmount, StrategyDetails, StrategyHelpContent, useStrategy } from '@/features/lending';
 
-type Step = 'details' | 'deposit';
+type Step =
+  | { kind: 'details' }
+  | { kind: 'amount'; tranche: StrategyTranche };
 
 /**
  * Strategy detail route: `/lending/<poolId>`.
  *
- * First shows a rich, read-only detail view (`StrategyDetails`) — name, status,
- * APY, TVL, capacity, a tranche breakdown, and a description. Tapping "Lend"
- * advances to the stepped `DepositFlow`. Backing out of the deposit returns to
- * the details; backing out of the details pops the route.
+ * Overview (`StrategyDetails`) → tap an Option → amount screen (`LendAmount`).
+ * The header is a circular back + a "?" holding the key-data table + About copy
+ * ({@link StrategyHelpContent}). Backing out of the amount step returns to the
+ * overview; backing out of the overview pops the route.
  */
 export default function StrategyDetailRoute() {
   const { poolId } = useLocalSearchParams<{ poolId: string }>();
   const router = useRouter();
   const { data: strategy, isLoading, isError } = useStrategy(poolId);
-  const [step, setStep] = useState<Step>('details');
+  const [step, setStep] = useState<Step>({ kind: 'details' });
 
-  const goBack = () => {
+  const popRoute = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/lending');
+    else router.replace('/(tabs)/earn');
   };
+  const onBack = step.kind === 'amount' ? () => setStep({ kind: 'details' }) : popRoute;
 
   return (
     <Screen>
       <Stack.Screen options={{ headerShown: false }} />
-      <ThemedText type="subtitle">{step === 'deposit' ? 'Deposit' : 'Strategy'}</ThemedText>
+      <ScreenHeader
+        onBack={onBack}
+        title={step.kind === 'amount' ? 'Lend' : undefined}
+        right={
+          strategy && step.kind === 'details' ? (
+            <HelpButton title={strategy.name}>
+              <StrategyHelpContent strategy={strategy} />
+            </HelpButton>
+          ) : undefined
+        }
+      />
 
       {isLoading && (
         <View style={styles.center}>
@@ -46,20 +62,19 @@ export default function StrategyDetailRoute() {
           <ThemedText type="small" themeColor="textSecondary">
             This strategy may no longer be available on the current network.
           </ThemedText>
-          <Button title="Back to strategies" onPress={goBack} />
+          <Button title="Back to strategies" onPress={popRoute} />
         </Card>
       )}
 
-      {strategy && step === 'details' && (
+      {strategy && step.kind === 'details' && (
         <StrategyDetails
           strategy={strategy}
-          onLend={() => setStep('deposit')}
-          onBack={goBack}
+          onSelectOption={(tranche) => setStep({ kind: 'amount', tranche })}
         />
       )}
 
-      {strategy && step === 'deposit' && (
-        <DepositFlow strategy={strategy} onClose={() => setStep('details')} />
+      {strategy && step.kind === 'amount' && (
+        <LendAmount strategy={strategy} tranche={step.tranche} />
       )}
     </Screen>
   );

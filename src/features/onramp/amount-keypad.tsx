@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -5,6 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+
+/** Default quick-amount presets (Send). */
+const DEFAULT_PRESETS: [string, number][] = [
+  ['10%', 0.1],
+  ['50%', 0.5],
+  ['Max', 1],
+];
 
 type Key = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '0' | '.' | 'del';
 
@@ -35,6 +43,10 @@ export function AmountKeypad({
   onContinue,
   continueLabel = 'Continue',
   error,
+  presets = DEFAULT_PRESETS,
+  header,
+  note,
+  disabled = false,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -43,10 +55,18 @@ export function AmountKeypad({
   onContinue: () => void;
   continueLabel?: string;
   error?: string | null;
+  /** Quick-amount presets: [label, fraction]. */
+  presets?: [string, number][];
+  /** Optional content above the amount (e.g. a source chip). */
+  header?: ReactNode;
+  /** Optional note under the button (e.g. a KYC requirement). */
+  note?: string;
+  /** Force-disable the continue button (e.g. gated on KYC). */
+  disabled?: boolean;
 }) {
   const theme = useTheme();
   const amountNum = Number(value || '0');
-  const valid = amountNum > 0 && amountNum <= available;
+  const valid = amountNum > 0 && amountNum <= available && !disabled;
 
   const press = (key: Key) => {
     haptics.select();
@@ -59,6 +79,7 @@ export function AmountKeypad({
 
   return (
     <View style={styles.container}>
+      {header ? <View style={styles.headerSlot}>{header}</View> : null}
       <View style={styles.display}>
         <Text style={[styles.amount, { color: value ? theme.text : theme.textSecondary }]}>
           ${value || '0'}
@@ -69,7 +90,7 @@ export function AmountKeypad({
       </View>
 
       <View style={styles.chips}>
-        {([['10%', 0.1], ['50%', 0.5], ['Max', 1]] as const).map(([label, p]) => (
+        {presets.map(([label, p]) => (
           <Pressable
             key={label}
             accessibilityRole="button"
@@ -101,12 +122,19 @@ export function AmountKeypad({
         </ThemedText>
       ) : null}
       <Button title={continueLabel} disabled={!valid} onPress={onContinue} />
+      {note ? (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
+          {note}
+        </ThemedText>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { gap: 12 },
+  headerSlot: { alignItems: 'center' },
+  note: { textAlign: 'center' },
   display: { alignItems: 'center', gap: 4, paddingVertical: 8 },
   amount: { fontFamily: Fonts.serifBold, fontSize: 52, lineHeight: 58 },
   chips: { flexDirection: 'row', gap: 10 },

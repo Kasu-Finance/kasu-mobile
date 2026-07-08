@@ -8,8 +8,9 @@ export { default as LendingScreen } from './lending-screen';
 
 export { StrategiesList } from './strategies-list';
 export type { StrategiesListProps } from './strategies-list';
-export { StrategyDetails } from './strategy-details';
+export { StrategyDetails, StrategyHelpContent } from './strategy-details';
 export type { StrategyDetailsProps } from './strategy-details';
+export { LendAmount } from './lend-amount';
 export { DepositFlow } from './deposit-flow';
 export type { DepositFlowProps } from './deposit-flow';
 export { Withdraw } from './withdraw';

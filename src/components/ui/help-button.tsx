@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,15 +13,18 @@ export interface HelpItem {
 
 /**
  * A round "?" button that opens a bottom sheet of plain-language explanations —
- * so screens can stay clean (no long paragraphs inline). Give it a title and a
- * list of {heading, body} items. Sits in the top-right of a screen header.
+ * so screens can stay clean (no long paragraphs inline). Pass `items`
+ * ({heading, body} list) for the common case, or `children` for custom content
+ * (e.g. a data table). Sits in the top-right of a screen header.
  */
 export function HelpButton({
   title,
   items,
+  children,
 }: {
   title: string;
-  items: HelpItem[];
+  items?: HelpItem[];
+  children?: ReactNode;
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
@@ -56,7 +59,8 @@ export function HelpButton({
                 </Pressable>
               </View>
               <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
-                {items.map((item) => (
+                {children}
+                {items?.map((item) => (
                   <View key={item.heading} style={styles.item}>
                     <ThemedText type="smallBold">{item.heading}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
