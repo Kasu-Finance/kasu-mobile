@@ -37,9 +37,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 16,
+    paddingBottom: 28,
     gap: 14,
-    maxHeight: '86%',
+    maxHeight: '90%',
   },
   grabber: {
     alignSelf: 'center',

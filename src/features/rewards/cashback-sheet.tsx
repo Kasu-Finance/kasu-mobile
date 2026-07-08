@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -27,6 +28,7 @@ export function CashbackSheet({
   rewards: RewardsModel;
 }) {
   const theme = useTheme();
+  const router = useRouter();
   const eligibleSpend = Math.min(rewards.monthlySpend, MONTHLY_CAP);
   const eligibleCashback = eligibleSpend * BASE_RATE;
 
@@ -68,7 +70,13 @@ export function CashbackSheet({
         Cashback limits apply. <ThemedText type="smallBold" themeColor="primary">See full details.</ThemedText>
       </ThemedText>
 
-      <Button title="Get more cashback" onPress={onClose} />
+      <Button
+        title="Get more cashback"
+        onPress={() => {
+          onClose();
+          router.push('/buy-points');
+        }}
+      />
       <Button title="Close" variant="secondary" onPress={onClose} />
     </BottomSheetModal>
   );

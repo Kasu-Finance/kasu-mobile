@@ -54,7 +54,8 @@ export default function RewardsScreen() {
           {rewards.tier}
         </ThemedText>
         <ThemedText type="title" style={styles.points}>
-          {rewards.points.toLocaleString()} <ThemedText type="title" themeColor="textSecondary">Points</ThemedText>
+          {rewards.points.toLocaleString()}{' '}
+          <ThemedText type="title" themeColor="primary">Points</ThemedText>
         </ThemedText>
         <View style={[styles.chip, { backgroundColor: theme.backgroundElement }]}>
           <ThemedText type="small" themeColor="textSecondary">
@@ -66,9 +67,9 @@ export default function RewardsScreen() {
       <View style={styles.actions}>
         <Button title="Invite friends" onPress={() => setSheet('referrals')} style={styles.actionBtn} />
         <Button
-          title="How it works"
+          title="Buy points"
           variant="secondary"
-          onPress={() => setSheet('cashback')}
+          onPress={() => router.push('/buy-points')}
           style={styles.actionBtn}
         />
       </View>

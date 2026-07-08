@@ -45,6 +45,7 @@ export function AmountKeypad({
   error,
   presets = DEFAULT_PRESETS,
   header,
+  display,
   note,
   disabled = false,
 }: {
@@ -59,6 +60,8 @@ export function AmountKeypad({
   presets?: [string, number][];
   /** Optional content above the amount (e.g. a source chip). */
   header?: ReactNode;
+  /** Replaces the default big-$ display (e.g. a From→To convert card). */
+  display?: ReactNode;
   /** Optional note under the button (e.g. a KYC requirement). */
   note?: string;
   /** Force-disable the continue button (e.g. gated on KYC). */
@@ -80,14 +83,16 @@ export function AmountKeypad({
   return (
     <View style={styles.container}>
       {header ? <View style={styles.headerSlot}>{header}</View> : null}
-      <View style={styles.display}>
-        <Text style={[styles.amount, { color: value ? theme.text : theme.textSecondary }]}>
-          ${value || '0'}
-        </Text>
-        <ThemedText type="small" themeColor="textSecondary">
-          ${available.toFixed(2)} available
-        </ThemedText>
-      </View>
+      {display ?? (
+        <View style={styles.display}>
+          <Text style={[styles.amount, { color: value ? theme.text : theme.textSecondary }]}>
+            ${value || '0'}
+          </Text>
+          <ThemedText type="small" themeColor="textSecondary">
+            ${available.toFixed(2)} available
+          </ThemedText>
+        </View>
+      )}
 
       <View style={styles.chips}>
         {presets.map(([label, p]) => (

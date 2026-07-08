@@ -1,8 +1,10 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '@/components/ui/screen';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { Segmented } from '@/components/ui/segmented';
 import { ActivityScreen } from '@/features/activity';
 import NotificationsScreen from '@/features/notifications/notifications-screen';
@@ -20,11 +22,15 @@ type Seg = 'activity' | 'alerts';
  */
 export default function ActivityTab() {
   const theme = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [seg, setSeg] = useState<Seg>('activity');
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View style={{ paddingHorizontal: 20, paddingTop: insets.top + 12 }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: insets.top + 12, gap: 12 }}>
+        <ScreenHeader
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        />
         <Segmented
           value={seg}
           onChange={(k) => setSeg(k as Seg)}
