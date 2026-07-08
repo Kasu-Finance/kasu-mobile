@@ -42,6 +42,7 @@ spending** (Immersve sandbox — which must still *look* real).
 | **Send → account number** (P2P) | ✅ real — gasless-intent USDC transfer via Privy (see gas note) |
 | **Push notifications** (card purchase → APNs) | ✅ real; settings screen w/ master + category toggles |
 | Profile + account details + legal links | ✅ real |
+| **Rewards/Tier** (points, cashback, payouts) | ✅ real-but-fake — derived from the real card purchases (2% cashback, points/$); referrals $0, Buy-points is a preview |
 | **Add funds → Debit card** (MoonPay) | 🔶 integration correct + live in **sandbox**; MoonPay geo-blocks the test region → shows "coming soon to your region". Real money after MoonPay KYB (key swap). |
 | **Add funds → Bank transfer** (Bridge) | 🔶 Plasma-style **preview** ("coming soon — Bridge"), copy/share disabled |
 | **Send → Bank account** (Bridge off-ramp) | 🔶 Plasma-style **preview** (currency → rail form), Send disabled |
@@ -72,7 +73,8 @@ else is a pushed route with a **`ScreenHeader`** (circular back + centered title
   + **Points** (1/$ spent), a rewards card (cashback + referrals), payouts
   **derived from the real card purchases** (`use-rewards.ts`: 2% on the first $500/mo
   + 0.1% after), and Cashback / Referrals explainer sheets (with an svg progress
-  ring). Fake-but-connected; referrals $0 (not wired).
+  ring). Fake-but-connected; referrals $0 (not wired). "Buy points" (`/buy-points`)
+  is Plasma's Convert screen (USD → Points, Kasu mark), Continue is a preview.
 - **Activity** (`app/activity.tsx`) — Activity / Alerts segments (Payments segment
   removed). Feed merges lending (SDK) + card purchases (Immersve) + on-chain USDC
   transfers (Tenderly). Tap a row → detail sheet.
