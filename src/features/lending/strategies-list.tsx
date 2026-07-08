@@ -12,12 +12,8 @@ import {
   filterLiveStrategies,
   formatStrategyApyRange,
   trancheFlow,
-  type StrategyStatus,
 } from './lib/strategy-display';
 import { useStrategies } from './use-strategies';
-
-/** Terracotta used for the "Full" status pill (matches web `--tag-full`). */
-const TAG_FULL = '#ba6b56';
 
 export interface StrategiesListProps {
   /** Tapping a strategy card surfaces it (caller routes to the detail screen). */
@@ -81,7 +77,6 @@ export function StrategiesList({ onSelect }: StrategiesListProps) {
 
 function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () => void }) {
   const theme = useTheme();
-  const status = deriveStrategyStatus(strategy);
   const apyRange = formatStrategyApyRange(strategy);
   const flow = trancheFlow(strategy);
 
@@ -92,10 +87,7 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
       onPress={onPress}
       style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
       <Card style={styles.cardGap}>
-        <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: theme.text }]}>{strategy.name}</Text>
-          <StatusPill status={status} />
-        </View>
+        <Text style={[styles.title, { color: theme.text }]}>{strategy.name}</Text>
 
         {/* Net APY — headline value + tranche flow, compact. */}
         <View style={styles.apyRow}>
@@ -123,22 +115,6 @@ function StrategyCard({ strategy, onPress }: { strategy: Strategy; onPress: () =
         </View>
       </Card>
     </Pressable>
-  );
-}
-
-function StatusPill({ status }: { status: StrategyStatus }) {
-  const theme = useTheme();
-  const live = status === 'Live';
-  const full = status === 'Full';
-  const bg = live ? theme.success : full ? TAG_FULL : theme.backgroundSelected;
-  const fg = live || full ? '#ffffff' : theme.textSecondary;
-  return (
-    <View style={[styles.pill, { backgroundColor: bg }]}>
-      <Text style={[styles.pillText, { color: fg }]}>
-        {live ? '⚡ ' : ''}
-        {status}
-      </Text>
-    </View>
   );
 }
 

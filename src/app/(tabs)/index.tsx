@@ -27,25 +27,6 @@ import { useViewAddress } from '@/lib/web3/use-view-address';
 
 type Sheet = 'add' | 'send' | null;
 
-/** Home explanations — behind the "?". */
-const HOME_HELP = {
-  title: 'Home',
-  items: [
-    {
-      heading: 'Your balance',
-      body: 'The dollars you can spend right now — on your card or to send. It’s your wallet and card together, as one number.',
-    },
-    {
-      heading: 'Your card',
-      body: 'Tap the card to flip it: see the full number, top it up, or view recent purchases. Tap again to flip back.',
-    },
-    {
-      heading: 'Add funds & Send',
-      body: 'Add money by debit card, bank transfer, or from another account — and send dollars to anyone instantly.',
-    },
-  ],
-};
-
 /**
  * Home: neobank dashboard. The card is the hero — tapping it flips it to reveal
  * the real number and swaps the content below for card management (top up +
@@ -115,7 +96,7 @@ export default function HomeScreen() {
 
   return (
     <Screen onRefresh={onRefresh}>
-      <TabHeader help={HOME_HELP} />
+      <TabHeader />
 
       <VisaCard
         balance={displayBalance}

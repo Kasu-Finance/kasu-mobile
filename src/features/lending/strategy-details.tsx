@@ -7,14 +7,11 @@ import { Card } from '@/components/ui/card';
 import { ACCENT } from '@/components/ui/theme-extras';
 import { useTheme } from '@/hooks/use-theme';
 import { formatApy, formatUsd } from '@/lib/format';
+import { haptics } from '@/lib/haptics';
 import { useSdk } from '@/lib/sdk/use-sdk';
 import { getChain } from '@/lib/web3/chains';
 
-import {
-  deriveStrategyStatus,
-  trancheHasCapacity,
-  type StrategyStatus,
-} from './lib/strategy-display';
+import { deriveStrategyStatus, trancheHasCapacity } from './lib/strategy-display';
 
 export interface StrategyDetailsProps {
   strategy: Strategy;
@@ -37,16 +34,14 @@ const MAX_DEPOSIT_CAP_THRESHOLD = 1_000_000_000; // $1B → "No cap"
  * ({@link StrategyHelpContent}); the Net APY panel is gone.
  */
 export function StrategyDetails({ strategy, onSelectOption }: StrategyDetailsProps) {
-  const status = deriveStrategyStatus(strategy);
+  // Only options with capacity — hide Full ones.
+  const options = strategy.tranches.filter(trancheHasCapacity);
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerRow}>
-        <ThemedText type="subtitle" style={styles.name}>
-          {strategy.name}
-        </ThemedText>
-        <StatusPill status={status} />
-      </View>
+      <ThemedText type="subtitle" style={styles.name}>
+        {strategy.name}
+      </ThemedText>
       {!!strategy.assetClass && (
         <ThemedText type="small" themeColor="textSecondary">
           {strategy.assetClass}
@@ -57,15 +52,27 @@ export function StrategyDetails({ strategy, onSelectOption }: StrategyDetailsPro
         <ThemedText type="smallBold" style={styles.sectionTitle}>
           Options
         </ThemedText>
-        <View style={styles.gap}>
-          {strategy.tranches.map((tranche) => (
-            <OptionCard
-              key={tranche.id}
-              tranche={tranche}
-              onPress={() => onSelectOption(tranche)}
-            />
-          ))}
-        </View>
+        {options.length > 0 ? (
+          <View style={styles.gap}>
+            {options.map((tranche) => (
+              <OptionCard
+                key={tranche.id}
+                tranche={tranche}
+                onPress={() => {
+                  haptics.select();
+                  onSelectOption(tranche);
+                }}
+              />
+            ))}
+          </View>
+        ) : (
+          <Card>
+            <ThemedText type="small" themeColor="textSecondary">
+              No options are available right now — they’re at full capacity.
+              Check back after the next weekly epoch.
+            </ThemedText>
+          </Card>
+        )}
       </View>
 
       <ThemedText type="small" themeColor="textSecondary" style={styles.footnote}>
@@ -191,18 +198,6 @@ function InfoRow({ label, value, last }: { label: string; value: string; last?: 
       </ThemedText>
       <ThemedText type="small" style={styles.infoValue}>
         {value}
-      </ThemedText>
-    </View>
-  );
-}
-
-function StatusPill({ status }: { status: StrategyStatus }) {
-  const theme = useTheme();
-  const live = status === 'Live';
-  return (
-    <View style={[styles.pill, { backgroundColor: live ? ACCENT : theme.backgroundSelected }]}>
-      <ThemedText type="small" style={{ color: live ? '#241a0c' : theme.textSecondary }}>
-        {status}
       </ThemedText>
     </View>
   );
