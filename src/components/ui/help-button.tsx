@@ -49,7 +49,9 @@ export function HelpButton({
             <View style={[styles.panel, { backgroundColor: theme.background }]}>
               <View style={styles.grabber} />
               <View style={styles.header}>
-                <ThemedText type="subtitle">{title}</ThemedText>
+                <ThemedText type="subtitle" numberOfLines={1} style={styles.headerTitle}>
+                  {title}
+                </ThemedText>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Close"
@@ -108,9 +110,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
     marginBottom: 8,
   },
+  headerTitle: { flex: 1 },
   close: {
+    flexShrink: 0,
     width: 34,
     height: 34,
     borderRadius: 17,

@@ -50,7 +50,7 @@ export function StrategyDetails({ strategy, onSelectOption }: StrategyDetailsPro
 
       <View style={styles.section}>
         <ThemedText type="smallBold" style={styles.sectionTitle}>
-          Options
+          Choose your repayment priority
         </ThemedText>
         {options.length > 0 ? (
           <View style={styles.gap}>
@@ -156,7 +156,9 @@ function OptionCard({
           <View style={styles.optionTitle}>
             <ThemedText type="smallBold">{tranche.name}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              {minLabel} – {maxLabel} ·{' '}
+              {minLabel} – {maxLabel}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
               {hasCapacity ? `${formatUsd(tranche.availableCapacity)} available` : 'Full'}
             </ThemedText>
           </View>
