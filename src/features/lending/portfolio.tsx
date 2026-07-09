@@ -12,6 +12,7 @@ import { useViewAddress } from '@/lib/web3/use-view-address';
 import { EARN_GRADIENT } from './earn-panel';
 import { TickingYield } from './ticking-yield';
 import { usePortfolio } from './use-portfolio';
+import { getTrancheDisplayName } from './lib/strategy-display';
 
 /** Days per year used to turn invested × APY into a per-day run-rate. */
 const DAYS_PER_YEAR = 365;
@@ -163,7 +164,8 @@ function PoolPosition({
         return (
           <View key={tranche.id} style={styles.trancheRow}>
             <ThemedText type="small" themeColor="textSecondary">
-              {tranche.name} · {formatUsd(invested)} {stableSymbol}
+              {getTrancheDisplayName(tranche.name, pool.poolName)} ·{' '}
+              {formatUsd(invested)} {stableSymbol}
             </ThemedText>
             {onWithdraw && (
               <Pressable

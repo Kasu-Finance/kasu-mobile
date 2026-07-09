@@ -1,6 +1,7 @@
 import type { UserRequest, UserRequestEvent } from '@kasufinance/kasu-sdk';
 
 import { formatUsd } from '@/lib/format';
+import { getTrancheDisplayName } from '@/features/lending/lib/strategy-display';
 
 /** Visual category for an activity row — drives glyph + dot colour. */
 export type ActivityKind =
@@ -103,7 +104,12 @@ function toDetails(req: UserRequest): ActivityDetail[] {
   const details: ActivityDetail[] = [
     { label: 'Status', value: req.status },
     { label: 'Pool', value: req.lendingPool?.name ?? 'Lending pool' },
-    { label: 'Tranche', value: req.trancheName || '—' },
+    {
+      label: 'Tranche',
+      value: req.trancheName
+        ? getTrancheDisplayName(req.trancheName, req.lendingPool?.name)
+        : '—',
+    },
     { label: 'Requested', value: formatUsd(requested) },
   ];
 
@@ -163,7 +169,11 @@ export function toActivityItems(requests: UserRequest[]): ActivityItem[] {
         id: req.id,
         kind,
         title,
-        subtitle: req.lendingPool?.name ?? req.trancheName ?? 'Lending pool',
+        subtitle:
+          req.lendingPool?.name ??
+          (req.trancheName
+            ? getTrancheDisplayName(req.trancheName, req.lendingPool?.name)
+            : 'Lending pool'),
         timestamp: req.timestamp,
         amount: signedUsd(displayAmount, isDeposit),
         positive: isDeposit && !cancelled,

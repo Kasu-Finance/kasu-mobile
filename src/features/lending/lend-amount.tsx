@@ -12,6 +12,7 @@ import { useSdk } from '@/lib/sdk/use-sdk';
 import { getChain } from '@/lib/web3/chains';
 import { useStableBalance } from '@/lib/web3/use-balance';
 import { useEthersSigner } from '@/lib/web3/use-ethers-signer';
+import { getTrancheDisplayName } from './lib/strategy-display';
 
 /** Lending quick-amount presets (Plasma uses 25 / 50 / 75%). */
 const LEND_PRESETS: [string, number][] = [
@@ -67,7 +68,9 @@ export function LendAmount({
           <View style={[styles.chipIcon, { backgroundColor: theme.backgroundSelected }]}>
             <SymbolView name="dollarsign" size={12} tintColor={theme.text} />
           </View>
-          <ThemedText type="smallBold">{tranche.name}</ThemedText>
+          <ThemedText type="smallBold">
+            {getTrancheDisplayName(tranche.name, strategy.name)}
+          </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             · {formatApy(tranche.apy)}
           </ThemedText>

@@ -62,11 +62,30 @@ export function formatStrategyApyRange(strategy: Strategy): string {
   return lo === hi ? `${loPct}%` : `${loPct}–${hiPct}%`;
 }
 
-/** Tranche names ordered safest→riskiest for the "Senior → … → Junior" flow. */
+
+/**
+ * User-facing tranche name. Apxium strategies (every pool except InvoiceMate's
+ * "Payment Finance (PayFi)") display their top retail tranche as
+ * "Upper Mezzanine" — the true senior position is held by the institutional
+ * lender (Rixon Capital). Display-only: ids, capacity checks and ordering all
+ * keep the raw subgraph name. Mirrors kasu-ui's `tranche-display-name.ts`.
+ */
+export function getTrancheDisplayName(
+  trancheName: string,
+  strategyName?: string | null,
+): string {
+  if (trancheName.trim().toLowerCase() !== 'senior') return trancheName;
+  const isApxium = !/payfi|payment finance/i.test(strategyName ?? '');
+  return isApxium ? 'Upper Mezzanine' : trancheName;
+}
+
+/** Tranche display names ordered safest→riskiest for the top-tranche → Junior flow. */
 export function trancheFlow(strategy: Strategy): string[] {
   // Subgraph order is Junior → Mezzanine → Senior; reverse so the flow reads
   // safest-first against the low→high APY range.
-  return [...strategy.tranches].reverse().map((t) => t.name);
+  return [...strategy.tranches]
+    .reverse()
+    .map((t) => getTrancheDisplayName(t.name, strategy.name));
 }
 
 /**

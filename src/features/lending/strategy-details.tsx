@@ -11,7 +11,11 @@ import { haptics } from '@/lib/haptics';
 import { useSdk } from '@/lib/sdk/use-sdk';
 import { getChain } from '@/lib/web3/chains';
 
-import { deriveStrategyStatus, trancheHasCapacity } from './lib/strategy-display';
+import {
+  deriveStrategyStatus,
+  getTrancheDisplayName,
+  trancheHasCapacity,
+} from './lib/strategy-display';
 
 export interface StrategyDetailsProps {
   strategy: Strategy;
@@ -58,6 +62,7 @@ export function StrategyDetails({ strategy, onSelectOption }: StrategyDetailsPro
               <OptionCard
                 key={tranche.id}
                 tranche={tranche}
+                strategyName={strategy.name}
                 onPress={() => {
                   haptics.select();
                   onSelectOption(tranche);
@@ -113,7 +118,9 @@ export function StrategyHelpContent({ strategy }: { strategy: Strategy }) {
         {strategy.tranches.length > 0 && (
           <InfoRow
             label="Options"
-            value={strategy.tranches.map((t) => t.name).join(' · ')}
+            value={strategy.tranches
+              .map((t) => getTrancheDisplayName(t.name, strategy.name))
+              .join(' · ')}
             last
           />
         )}
@@ -133,9 +140,11 @@ export function StrategyHelpContent({ strategy }: { strategy: Strategy }) {
 
 function OptionCard({
   tranche,
+  strategyName,
   onPress,
 }: {
   tranche: StrategyTranche;
+  strategyName: string;
   onPress: () => void;
 }) {
   const theme = useTheme();
@@ -148,13 +157,15 @@ function OptionCard({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Lend into ${tranche.name}`}
+      accessibilityLabel={`Lend into ${getTrancheDisplayName(tranche.name, strategyName)}`}
       onPress={onPress}
       style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
       <Card style={styles.optionCard}>
         <View style={styles.optionHeader}>
           <View style={styles.optionTitle}>
-            <ThemedText type="smallBold">{tranche.name}</ThemedText>
+            <ThemedText type="smallBold">
+              {getTrancheDisplayName(tranche.name, strategyName)}
+            </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {minLabel} – {maxLabel}
             </ThemedText>
